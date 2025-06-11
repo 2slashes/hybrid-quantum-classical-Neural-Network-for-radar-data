@@ -13,7 +13,7 @@ from itertools import cycle
 import os
 
 #----------------------------STUFF---------------------------------------
-num_outputs = None
+num_outputs: int = None
 def set_outputs(outputs: int):
     global num_outputs
     num_outputs = outputs
@@ -48,6 +48,54 @@ def set_root_dir(path):
 
 # unsure what this is for
 model_snr = 5
+model_path = f"{radar_path}/{model_dir}"
+plot_path = f"{radar_path}/{plot_dir}"
+os.system(f"mkdir -p {model_path}")
+os.system(f"mkdir -p {plot_path}")
+conf = {}
+conf['f_s'] = 10_000
+conf['SNR'] = [20, 15, 10, 5, 0, -5]
+conf['batch_size'] = 8
+conf['epochs'] = 200
+conf['min_epochs'] = 50
+conf['learning_rate'] = 0.001 # these should be parameters
+conf['save_model'] = True
+# conf['model_path'] = f"{model_path}/hybrid-parallel-model-{snr}.pt"
+conf['model_name'] = "hybrid-parallel-model"
+conf['plot_confusion'] = True
+
+def set_f_s(f_s: int):
+    global conf
+    conf['f_s'] = f_s
+
+def set_snr(snr: list[int]):
+    global conf
+    conf['SNR'] = snr
+
+def set_batch_size(batch_size: int):
+    global conf
+    conf['batch_size'] = batch_size
+
+def set_epochs(epochs: int):
+    global conf
+    conf['epochs'] = epochs
+
+def set_min_epochs(min_epochs: int):
+    global conf
+    conf['min_epochs'] = min_epochs
+
+def set_learning_rate(learning_rate: float):
+    conf['learning_rate'] = learning_rate
+
+def set_save_model(save_model: bool):
+    conf['save_model'] = save_model
+
+def set_model_name(model_name: str):
+    conf['model_name'] = model_name
+
+def plot_confmat(plot: bool):
+    conf['plot_confusion'] = plot
+
 #----------------------------MODEL DEFINITION----------------------------------
 n_qubits = 5
 dev = qml.device("lightning.gpu", wires=n_qubits)
@@ -129,10 +177,10 @@ class HybridRadarClassifier(nn.Module):
 # ------------------TRAIN AND TEST------------------------
 
 # this needs to be removed expeditiously
-model_path = f"{radar_path}/{model_dir}"
-plot_path = f"{radar_path}/{plot_dir}"
-os.system(f"mkdir -p {model_path}")
-os.system(f"mkdir -p {plot_path}")
+# model_path = f"{radar_path}/{model_dir}"
+# plot_path = f"{radar_path}/{plot_dir}"
+# os.system(f"mkdir -p {model_path}")
+# os.system(f"mkdir -p {plot_path}")
 
 def dataloader(file_extension):
     data = np.load(file_extension)
@@ -184,7 +232,7 @@ def plot_multiclass_roc(target, probs, snr, plot_file=None,
         plt.show()
 
 # train and test functions generalized to work with either model
-def train(conf, trainLoader, device):
+def train(conf, model_path, trainLoader, device):
 
     net = HybridRadarClassifier(conf).to(device)
 
@@ -213,14 +261,14 @@ def train(conf, trainLoader, device):
             break
 
     if conf['save_model'] is True:
-        print(f"Saving model state to {conf['model_path']}")
-        torch.save(net.state_dict(), conf['model_path'])
+        print(f"Saving model state to {model_path}")
+        torch.save(net.state_dict(), model_path)
 
-def test(conf, testLoader, device, plot_dir=None):
+def test(conf, cur_model_path, testLoader, device, plot_dir=None):
 
     # load model state
     net = HybridRadarClassifier(conf).to(device)
-    net.load_state_dict(torch.load(conf['model_path']))
+    net.load_state_dict(torch.load(cur_model_path))
     net.eval()
 
     correct = 0
@@ -289,42 +337,26 @@ def test(conf, testLoader, device, plot_dir=None):
 
 #----------------------TRAINING CODE-----------------------
 def train_model():
-    for snr, threshold in zip([5], # these numbers seem arbitrary
-                            [0.002]):
-        conf = {}
-        conf['f_s'] = 10_000
-        conf['SNR'] = snr
-        conf['batch_size'] = 8
-        conf['epochs'] = 2
-        conf['min_epochs'] = 50
-        conf['learning_rate'] = 0.001 # these should be parameters
-        conf['loss_threshold'] = threshold
-        conf['save_model'] = True
-        conf['model_path'] = f"{model_path}/hybrid-parallel-model-{snr}.pt"
-
-        trainset_root = f"{radar_path}/{data_dir}/trainset/{conf['f_s']}fs/{conf['SNR']}SNR"
+    global conf, model_path
+    for snr in conf['SNR']:
+        cur_model_path = f"{model_path}/{conf['model_name']}-{snr}.pt"
+        trainset_root = f"{radar_path}/{data_dir}/trainset/{conf['f_s']}fs/{snr}SNR"
         trainds = ds.DatasetFolder(trainset_root, dataloader, extensions=("npy",))
         trainLoader = torch.utils.data.DataLoader(trainds, conf["batch_size"], shuffle=True, num_workers=2)
 
         print(f"SNR: {snr} dB")
-        train(conf, trainLoader, get_device())
+        train(conf, cur_model_path, trainLoader, get_device())
 
 #---------------------EVALUATION------------------------------
 def eval_model():
+    global conf, model_path
     model_snr = 5
-    for snr in [20, 15, 10, 5, 0, -5]:
-        conf = {}
-        conf['f_s'] = 10_000
-        conf['SNR'] = snr
-        conf['batch_size'] = 8
-        conf['epochs'] = 10
-        conf['learning_rate'] = 0.001
-        conf['plot_confusion'] = True
-        conf['model_path'] = f"{model_path}/hybrid-parallel-model-{model_snr}.pt"
+    for snr in conf["SNR"]:
+        cur_model_path = f"{model_path}/{conf['model_name']}-{snr}.pt"
 
-        testset_root = f"{radar_path}/{data_dir}/testset/{conf['f_s']}fs/{conf['SNR']}SNR"
+        testset_root = f"{radar_path}/{data_dir}/testset/{conf['f_s']}fs/{snr}SNR"
         testds = ds.DatasetFolder( testset_root, dataloader, extensions=("npy",))
         testLoader = torch.utils.data.DataLoader( testds, conf["batch_size"], shuffle=True, num_workers=2)
 
         print(f"SNR: {snr} dB")
-        test(conf, testLoader, get_device(), plot_dir=plot_path)
+        test(conf, cur_model_path, testLoader, get_device(), plot_dir=plot_path)
