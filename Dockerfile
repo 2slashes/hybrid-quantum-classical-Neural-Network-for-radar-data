@@ -15,3 +15,6 @@ RUN pip3 install -U scikit-learn
 RUN pip3 install pandas
 RUN pip3 install wandb
 RUN pip3 install mlxtend
+RUN pip3 install torcheval
+
+WORKDIR /workspace

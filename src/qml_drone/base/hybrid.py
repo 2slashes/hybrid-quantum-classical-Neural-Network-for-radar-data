@@ -50,9 +50,10 @@ def set_root_dir(path):
 model_snr = 5
 #----------------------------MODEL DEFINITION----------------------------------
 n_qubits = 5
-dev = qml.device("default.qubit", wires=n_qubits)
+dev = qml.device("lightning.gpu", wires=n_qubits)
 
 # qnode shared within the HybridRadarClassifier class, and between the detection and classification models
+@qml.qnode(dev)
 def qnode(inputs, weights):
     qml.AngleEmbedding(inputs, wires=range(n_qubits))
     qml.BasicEntanglerLayers(weights, wires=range(n_qubits))
@@ -257,12 +258,16 @@ def test(conf, testLoader, device, plot_dir=None):
         else:
             predicted = torch.cat((predicted, partial_predicted))
 
+    target = target.cpu()
+    probabilities = probabilities.cpu()
+    predicted = predicted.cpu()
+
     roc_plot_file = None
     conf_plot_file = None
     if plot_dir is not None:
         roc_plot_file = f"{plot_dir}/hybrid_classifier_roc_model-{model_snr}_signal-{conf['SNR']}.pdf"
         conf_plot_file = f"{plot_dir}/hybrid_classifier_conf_model-{model_snr}_signal-{conf['SNR']}.pdf"
-    plot_multiclass_roc(target, probabilities, conf['SNR'], plot_file=roc_plot_file)
+    plot_multiclass_roc(target.cpu(), probabilities.cpu(), conf['SNR'], plot_file=roc_plot_file)
 
     confm = confusion_matrix(target, predicted)
     print(f"{confm=}")
@@ -290,7 +295,7 @@ def train_model():
         conf['f_s'] = 10_000
         conf['SNR'] = snr
         conf['batch_size'] = 8
-        conf['epochs'] = 200
+        conf['epochs'] = 2
         conf['min_epochs'] = 50
         conf['learning_rate'] = 0.001 # these should be parameters
         conf['loss_threshold'] = threshold
