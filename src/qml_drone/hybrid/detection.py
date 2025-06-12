@@ -15,5 +15,5 @@ def create():
     eval_model()
 
 set_epochs(1)
-set_root_dir("../original/Radar")
+set_root_dir("../original/Radar/binary")
 create()

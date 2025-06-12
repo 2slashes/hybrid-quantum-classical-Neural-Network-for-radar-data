@@ -105,16 +105,16 @@ def set_model_type(model_type: str):
         raise Exception("Modle type is invalid. Must be detection or classification.")
     conf['model_type'] = model_type_lower
 
-    if model_type_lower == "detection":
-        # set_root_dir("Radar/binary")
-        data_dir = "binary/two_sided_large"
-        model_dir = "binary/two_sided_models"
-        plot_dir = "binary/two_sided_plots"
-    else:
-        # set_root_dir("Radar")
-        data_dir = "two_sided"
-        model_dir = "two_sided_models"
-        plot_dir = "two_sided_plots"
+    # if model_type_lower == "detection":
+    #     # set_root_dir("Radar/binary")
+    #     data_dir = "binary/two_sided_large"
+    #     model_dir = "binary/two_sided_models"
+    #     plot_dir = "binary/two_sided_plots"
+    # else:
+    #     # set_root_dir("Radar")
+    #     data_dir = "two_sided"
+    #     model_dir = "two_sided_models"
+    #     plot_dir = "two_sided_plots"
 
 
 #----------------------------MODEL DEFINITION----------------------------------
@@ -309,7 +309,7 @@ def train(conf, model_path, trainLoader, device):
         print(f"Saving model state to {model_path}")
         torch.save(net.state_dict(), model_path)
 
-def test(conf, cur_model_path, testLoader, device, plot_dir=None, pos_label=None):
+def test(conf, snr, cur_model_path, testLoader, device, plot_dir=None, pos_label=None):
 
     # load model state
     net = HybridRadarClassifier(conf).to(device)
@@ -359,16 +359,16 @@ def test(conf, cur_model_path, testLoader, device, plot_dir=None, pos_label=None
 
     if conf['model_type'] == "classification":
         if plot_dir is not None:
-            roc_plot_file = f"{plot_dir}/hybrid_classifier_roc_model-{model_snr}_signal-{conf['SNR']}.pdf"
-            conf_plot_file = f"{plot_dir}/hybrid_classifier_conf_model-{model_snr}_signal-{conf['SNR']}.pdf"
-        plot_multiclass_roc(target.cpu(), probabilities.cpu(), conf['SNR'], plot_file=roc_plot_file)
+            roc_plot_file = f"{plot_dir}/hybrid_classifier_roc_model-{model_snr}_signal-{snr}.pdf"
+            conf_plot_file = f"{plot_dir}/hybrid_classifier_conf_model-{model_snr}_signal-{snr}.pdf"
+        plot_multiclass_roc(target.cpu(), probabilities.cpu(), snr, plot_file=roc_plot_file)
     else:
         if pos_label is None:
             pos_label = 0
         plot_file = None
         if plot_dir is not None:
-            plot_file = f"{plot_dir}/hybrid_detector_roc_model-{model_snr}_signal-{conf['SNR']}.pdf"
-        plot_sklearn_roc_curve(target, probabilities[:,pos_label], conf['SNR'],
+            plot_file = f"{plot_dir}/hybrid_detector_roc_model-{model_snr}_signal-{snr}.pdf"
+        plot_sklearn_roc_curve(target, probabilities[:,pos_label], snr,
                             plot_file=plot_file, pos_label=pos_label)
     confm = confusion_matrix(target, predicted)
     print(f"{confm=}")
@@ -384,7 +384,7 @@ def test(conf, cur_model_path, testLoader, device, plot_dir=None, pos_label=None
                                             show_normed=True,
                                             colorbar=True,
                                             class_names=confm_class_map)
-        ax.set_title(f"Confusion matrix for SNR {conf['SNR']}dB")
+        ax.set_title(f"Confusion matrix for SNR {snr}dB")
         plt.tight_layout()
         if conf_plot_file is not None:
             plt.savefig(conf_plot_file)
@@ -410,7 +410,7 @@ def train_model():
 #---------------------EVALUATION------------------------------
 def eval_model():
     global conf, model_path
-    model_snr = 5
+    os.system(f"mkdir -p {plot_path}")
     for snr in conf["SNR"]:
         cur_model_path = f"{model_path}/{conf['model_name']}-{snr}.pt"
 
@@ -419,4 +419,4 @@ def eval_model():
         testLoader = torch.utils.data.DataLoader( testds, conf["batch_size"], shuffle=True, num_workers=2)
 
         print(f"SNR: {snr} dB")
-        test(conf, cur_model_path, testLoader, get_device(), plot_dir=plot_path)
+        test(conf, snr, cur_model_path, testLoader, get_device(), plot_dir=plot_path)
