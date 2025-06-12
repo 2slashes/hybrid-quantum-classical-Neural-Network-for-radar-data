@@ -9,8 +9,8 @@ device = torch.device("cuda" if use_cuda else "cpu")
 # confm_class_map = ["Drones", "Noise"]
 
 def create():
-    set_model_type("classification")
-    set_outputs(5)
+    set_model_type("detection")
+    set_outputs(2)
     train_model()
     eval_model()
 

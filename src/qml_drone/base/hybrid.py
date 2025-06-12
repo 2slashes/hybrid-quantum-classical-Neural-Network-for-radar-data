@@ -13,6 +13,7 @@ from itertools import cycle
 import os
 
 #----------------------------STUFF---------------------------------------
+
 num_outputs: int = None
 def set_outputs(outputs: int):
     global num_outputs
@@ -35,6 +36,7 @@ def get_device():
 # this should be customizable 
 drone_type_map = ["DJI_Matrice_300_RTK", "DJI_Mavic_Air_2",
                   "DJI_Mavic_Mini", "DJI_Phantom_4", "Parrot_Disco"]
+confm_class_map = ["Drones", "Noise"]
 # same with this
 roc_curve_minimum = 1e-3
 
@@ -62,6 +64,7 @@ conf['save_model'] = True
 # conf['model_path'] = f"{model_path}/hybrid-parallel-model-{snr}.pt"
 conf['model_name'] = "hybrid-parallel-model"
 conf['plot_confusion'] = True
+conf['model_type'] = "classification"
 
 def set_f_s(f_s: int):
     global conf
@@ -94,6 +97,25 @@ def set_model_name(model_name: str):
 
 def plot_confmat(plot: bool):
     conf['plot_confusion'] = plot
+
+def set_model_type(model_type: str):
+    global conf, data_dir, model_dir, plot_dir
+    model_type_lower = model_type.lower()
+    if model_type_lower != "classification" and model_type_lower != "detection":
+        raise Exception("Modle type is invalid. Must be detection or classification.")
+    conf['model_type'] = model_type_lower
+
+    if model_type_lower == "detection":
+        # set_root_dir("Radar/binary")
+        data_dir = "binary/two_sided_large"
+        model_dir = "binary/two_sided_models"
+        plot_dir = "binary/two_sided_plots"
+    else:
+        # set_root_dir("Radar")
+        data_dir = "two_sided"
+        model_dir = "two_sided_models"
+        plot_dir = "two_sided_plots"
+
 
 #----------------------------MODEL DEFINITION----------------------------------
 n_qubits = 5
@@ -230,6 +252,30 @@ def plot_multiclass_roc(target, probs, snr, plot_file=None,
     else:
         plt.show()
 
+def plot_sklearn_roc_curve(y_real, y_pred, snr, plot_file=None,
+                           pos_label=None, remove_zeros=False):
+    fpr, tpr, _ = roc_curve(y_real, y_pred, pos_label=pos_label)
+    if remove_zeros is True:
+        zero_indices = np.where(np.isclose(fpr, 0))
+        fpr = np.delete(fpr, zero_indices)
+        tpr = np.delete(tpr, zero_indices)
+    else:
+        fpr[np.isclose(fpr,0)] = 1e-5
+    roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr, estimator_name=None).plot()
+    roc_display.figure_.set_size_inches(5,5)
+    roc_display.ax_.set_xscale("log")
+    roc_display.ax_.set_xlim(roc_curve_minimum, 1.0)
+    roc_display.ax_.set_xlabel("False Positive Rate")
+    line = plt.plot(np.geomspace(roc_curve_minimum,1.0), np.geomspace(roc_curve_minimum,1.0), color='g')
+    line[0].set_label("Chance")
+    roc_display.line_.set_label("Hybrid detector")
+    roc_display.ax_.legend()
+    plt.tight_layout()
+    if plot_file is not None:
+        plt.savefig(plot_file)
+    else:
+        plt.show()
+
 # train and test functions generalized to work with either model
 def train(conf, model_path, trainLoader, device):
 
@@ -263,7 +309,7 @@ def train(conf, model_path, trainLoader, device):
         print(f"Saving model state to {model_path}")
         torch.save(net.state_dict(), model_path)
 
-def test(conf, cur_model_path, testLoader, device, plot_dir=None):
+def test(conf, cur_model_path, testLoader, device, plot_dir=None, pos_label=None):
 
     # load model state
     net = HybridRadarClassifier(conf).to(device)
@@ -308,22 +354,36 @@ def test(conf, cur_model_path, testLoader, device, plot_dir=None):
     target = target.cpu()
     probabilities = probabilities.cpu()
     predicted = predicted.cpu()
-
     roc_plot_file = None
     conf_plot_file = None
-    if plot_dir is not None:
-        roc_plot_file = f"{plot_dir}/hybrid_classifier_roc_model-{model_snr}_signal-{conf['SNR']}.pdf"
-        conf_plot_file = f"{plot_dir}/hybrid_classifier_conf_model-{model_snr}_signal-{conf['SNR']}.pdf"
-    plot_multiclass_roc(target.cpu(), probabilities.cpu(), conf['SNR'], plot_file=roc_plot_file)
 
+    if conf['model_type'] == "classification":
+        if plot_dir is not None:
+            roc_plot_file = f"{plot_dir}/hybrid_classifier_roc_model-{model_snr}_signal-{conf['SNR']}.pdf"
+            conf_plot_file = f"{plot_dir}/hybrid_classifier_conf_model-{model_snr}_signal-{conf['SNR']}.pdf"
+        plot_multiclass_roc(target.cpu(), probabilities.cpu(), conf['SNR'], plot_file=roc_plot_file)
+    else:
+        if pos_label is None:
+            pos_label = 0
+        plot_file = None
+        if plot_dir is not None:
+            plot_file = f"{plot_dir}/hybrid_detector_roc_model-{model_snr}_signal-{conf['SNR']}.pdf"
+        plot_sklearn_roc_curve(target, probabilities[:,pos_label], conf['SNR'],
+                            plot_file=plot_file, pos_label=pos_label)
     confm = confusion_matrix(target, predicted)
     print(f"{confm=}")
     if conf['plot_confusion'] is True:
         plt.close()
-        fig, ax = plot_confusion_matrix(conf_mat=confm,
-                                        show_normed=True,
-                                        colorbar=True,
-                                        class_names=drone_type_map)
+        if conf['model_type'] == "classification":
+            fig, ax = plot_confusion_matrix(conf_mat=confm,
+                                            show_normed=True,
+                                            colorbar=True,
+                                            class_names=drone_type_map)
+        else:
+            fig, ax = plot_confusion_matrix(conf_mat=confm,
+                                            show_normed=True,
+                                            colorbar=True,
+                                            class_names=confm_class_map)
         ax.set_title(f"Confusion matrix for SNR {conf['SNR']}dB")
         plt.tight_layout()
         if conf_plot_file is not None:
