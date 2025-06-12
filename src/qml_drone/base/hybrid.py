@@ -43,15 +43,14 @@ data_dir = "two_sided"
 model_dir = "two_sided_models"
 plot_dir = "two_sided_plots"
 def set_root_dir(path):
-    global radar_path
+    global radar_path, model_path, plot_path
     radar_path = path
+    model_path = f"{radar_path}/{model_dir}"
+    plot_path = f"{radar_path}/{plot_dir}"
 
 # unsure what this is for
 model_snr = 5
-model_path = f"{radar_path}/{model_dir}"
-plot_path = f"{radar_path}/{plot_dir}"
-os.system(f"mkdir -p {model_path}")
-os.system(f"mkdir -p {plot_path}")
+
 conf = {}
 conf['f_s'] = 10_000
 conf['SNR'] = [20, 15, 10, 5, 0, -5]
@@ -98,7 +97,7 @@ def plot_confmat(plot: bool):
 
 #----------------------------MODEL DEFINITION----------------------------------
 n_qubits = 5
-dev = qml.device("lightning.gpu", wires=n_qubits)
+dev = qml.device("default.qubit", wires=n_qubits)
 
 # qnode shared within the HybridRadarClassifier class, and between the detection and classification models
 @qml.qnode(dev)
@@ -338,6 +337,7 @@ def test(conf, cur_model_path, testLoader, device, plot_dir=None):
 #----------------------TRAINING CODE-----------------------
 def train_model():
     global conf, model_path
+    os.system(f"mkdir -p {model_path}")
     for snr in conf['SNR']:
         cur_model_path = f"{model_path}/{conf['model_name']}-{snr}.pt"
         trainset_root = f"{radar_path}/{data_dir}/trainset/{conf['f_s']}fs/{snr}SNR"
