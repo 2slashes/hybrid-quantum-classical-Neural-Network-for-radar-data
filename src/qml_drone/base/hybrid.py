@@ -115,7 +115,11 @@ def set_model_type(model_type: str):
     #     data_dir = "two_sided"
     #     model_dir = "two_sided_models"
     #     plot_dir = "two_sided_plots"
-
+n_qlayers = 4
+def set_qlayers(num_qlayers: int):
+    # set the number of parallel qlayers
+    global n_qlayers
+    n_qlayers = num_qlayers
 
 #----------------------------MODEL DEFINITION----------------------------------
 n_qubits = 5
@@ -148,15 +152,19 @@ class HybridRadarClassifier(nn.Module):
         self.pool2 = nn.MaxPool2d(2, 2) # o/p shape (32, 4, 63)
 
         #quantum layer
-        self.qlayer1 = qml.qnn.TorchLayer(qnode, weight_shapes)
-        self.qlayer2 = qml.qnn.TorchLayer(qnode, weight_shapes)
-        self.qlayer3 = qml.qnn.TorchLayer(qnode, weight_shapes)
-        self.qlayer4 = qml.qnn.TorchLayer(qnode, weight_shapes)
+        # self.qlayer1 = qml.qnn.TorchLayer(qnode, weight_shapes)
+        # self.qlayer2 = qml.qnn.TorchLayer(qnode, weight_shapes)
+        # self.qlayer3 = qml.qnn.TorchLayer(qnode, weight_shapes)
+        # self.qlayer4 = qml.qnn.TorchLayer(qnode, weight_shapes)
+        self.qlayers = []
+        global n_qlayers
+        for i in range(n_qlayers):
+            self.qlayers.append(qml.qnn.TorchLayer(qnode, weight_shapes))
 
         #fully connected layers
         self.fc1 = nn.Linear( 32 * 12 * 21 , 120)
-        self.fc2 = nn.Linear( 120 , 20 )
-        self.fc3 = nn.Linear( 20 , self.outputs)  # o/p shape should be (batch_size,5,1,1)
+        self.fc2 = nn.Linear( 120 , 5 * n_qlayers )
+        self.fc3 = nn.Linear( 5 * n_qlayers , self.outputs)  # o/p shape should be (batch_size,5,1,1)
 
         self.drop = nn.Dropout2d(p=0.5)
         self.relu = nn.LeakyReLU()
@@ -177,14 +185,21 @@ class HybridRadarClassifier(nn.Module):
         # Make sure the values are normalised to lie in the range [0,pi]
         # since the qnodes are using angle embedding
         x = F.normalize(x) * np.pi
-        x_1, x_2, x_3, x_4 = torch.split(x, 5, dim=1)
+        global n_qlayers
+
+        # x_1, x_2, x_3, x_4 = torch.split(x, 5, dim=1)
+        x_split = torch.split(x, 5, dim=1)
+        post_qlayer = []
+        for chunk, qlayer in zip(x_split, self.qlayers):
+            post_qlayer.append(qlayer(chunk))
         #print(f"input {x_1=}")
-        x_1 = self.qlayer1(x_1)
-        x_2 = self.qlayer2(x_2)
-        x_3 = self.qlayer3(x_3)
-        x_4 = self.qlayer4(x_4)
+        # x_1 = self.qlayer1(x_1)
+        # x_2 = self.qlayer2(x_2)
+        # x_3 = self.qlayer3(x_3)
+        # x_4 = self.qlayer4(x_4)
         #print(f"output {x_1=}")
-        x = torch.cat([x_1, x_2, x_3, x_4], axis=1)
+        # x = torch.cat([x_1, x_2, x_3, x_4], axis=1)
+        x = torch.cat(post_qlayer, axis=1)
 
      # if we want qlayers connected serially?
        # x = self.qlayer1(x)

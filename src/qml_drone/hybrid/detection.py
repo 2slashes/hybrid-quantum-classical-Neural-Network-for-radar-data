@@ -1,4 +1,4 @@
-from qml_drone.base.hybrid import train_model, eval_model, set_outputs, set_root_dir, set_epochs, set_model_type
+from qml_drone.base.hybrid import train_model, eval_model, set_outputs, set_root_dir, set_epochs, set_model_type, set_qlayers
 import torch.nn as nn
 import torch
 from torcheval.metrics.functional import binary_f1_score
@@ -14,6 +14,7 @@ def create():
     train_model()
     eval_model()
 
+set_qlayers(5)
 set_epochs(1)
 set_root_dir("../original/Radar/binary")
 create()
