@@ -1,11 +1,13 @@
 from qml_drone.base.hybrid import (
     train,
     test,
-    set_outputs,
-    set_root_dir,
-    set_epochs,
-    set_model_type,
     set_qlayers,
+)
+from qml_drone.base.common import (
+    set_outputs,
+    set_model_type,
+    set_epochs,
+    set_root_dir
 )
 
 

@@ -5,123 +5,11 @@ import torch.nn.functional as F
 import numpy as np
 import torchvision.datasets as ds
 import os
-from .common import train as common_train, test as common_test, dataloader
+from .common import train as common_train, test as common_test, dataloader, get_outputs, get_conf, get_paths
 
 # ----------------------------STUFF---------------------------------------
 
-num_outputs: int = None
 
-
-def set_outputs(outputs: int):
-    global num_outputs
-    num_outputs = outputs
-
-
-def get_outputs():
-    global num_outputs
-    if num_outputs is None:
-        raise Exception(
-            "Number of outputs not configured. Use set_outputs to set the number of outputs."
-        )
-    return num_outputs
-
-
-# this should be customizable
-drone_type_map = [
-    "DJI_Matrice_300_RTK",
-    "DJI_Mavic_Air_2",
-    "DJI_Mavic_Mini",
-    "DJI_Phantom_4",
-    "Parrot_Disco",
-]
-confm_class_map = ["Drones", "Noise"]
-# same with this
-
-radar_path = "Radar"
-data_dir = "two_sided"
-model_dir = "two_sided_models"
-plot_dir = "two_sided_plots"
-
-
-def set_root_dir(path):
-    global radar_path, model_path, plot_path
-    radar_path = path
-    model_path = f"{radar_path}/{model_dir}"
-    plot_path = f"{radar_path}/{plot_dir}"
-
-
-conf = {}
-conf["f_s"] = 10_000
-conf["SNR"] = [20, 15, 10, 5, 0, -5]
-conf["batch_size"] = 8
-conf["epochs"] = 200
-conf["min_epochs"] = 50
-conf["learning_rate"] = 0.001  # these should be parameters
-conf["save_model"] = True
-# conf['model_path'] = f"{model_path}/hybrid-parallel-model-{snr}.pt"
-conf["model_name"] = "hybrid-parallel-model"
-conf["plot_confusion"] = True
-conf["model_type"] = "classification"
-
-
-def set_f_s(f_s: int):
-    global conf
-    conf["f_s"] = f_s
-
-
-def set_snr(snr: list[int]):
-    global conf
-    conf["SNR"] = snr
-
-
-def set_batch_size(batch_size: int):
-    global conf
-    conf["batch_size"] = batch_size
-
-
-def set_epochs(epochs: int):
-    global conf
-    conf["epochs"] = epochs
-
-
-def set_min_epochs(min_epochs: int):
-    global conf
-    conf["min_epochs"] = min_epochs
-
-
-def set_learning_rate(learning_rate: float):
-    conf["learning_rate"] = learning_rate
-
-
-def set_save_model(save_model: bool):
-    conf["save_model"] = save_model
-
-
-def set_model_name(model_name: str):
-    conf["model_name"] = model_name
-
-
-def plot_confmat(plot: bool):
-    conf["plot_confusion"] = plot
-
-
-def set_model_type(model_type: str):
-    global conf, data_dir, model_dir, plot_dir
-    model_type_lower = model_type.lower()
-    if model_type_lower != "classification" and model_type_lower != "detection":
-        raise Exception("Model type is invalid. Must be detection or classification.")
-    conf["model_type"] = model_type_lower
-
-    # if model_type_lower == "detection":
-    #     # set_root_dir("Radar/binary")
-    #     data_dir = "binary/two_sided_large"
-    #     model_dir = "binary/two_sided_models"
-    #     plot_dir = "binary/two_sided_plots"
-    # else:
-    #     # set_root_dir("Radar")
-    #     data_dir = "two_sided"
-    #     model_dir = "two_sided_models"
-    #     plot_dir = "two_sided_plots"
 
 
 n_qlayers = 4
@@ -232,18 +120,19 @@ class HybridRadarClassifier(nn.Module):
 
 
 def train():
-    global conf, model_path
-    os.system(f"mkdir -p {model_path}")
+    conf = get_conf()
+    paths = get_paths()
+
+    os.system(f"mkdir -p {paths['model_path']}")
     for snr in conf["SNR"]:
-        cur_model_path = f"{model_path}/{conf['model_name']}-{snr}.pt"
-        trainset_root = f"{radar_path}/{data_dir}/trainset/{conf['f_s']}fs/{snr}SNR"
+        cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
+        trainset_root = f"{paths['radar_path']}/{paths['data_dir']}/trainset/{conf['f_s']}fs/{snr}SNR"
         trainds = ds.DatasetFolder(trainset_root, dataloader, extensions=("npy",))
         trainLoader = torch.utils.data.DataLoader(
             trainds, conf["batch_size"], shuffle=True, num_workers=2
         )
 
         print(f"SNR: {snr} dB")
-
         net = HybridRadarClassifier(conf)
         common_train(conf, net, cur_model_path, trainLoader)
 
@@ -252,12 +141,14 @@ def train():
 
 
 def test():
-    global conf, model_path
-    os.system(f"mkdir -p {plot_path}")
-    for snr in conf["SNR"]:
-        cur_model_path = f"{model_path}/{conf['model_name']}-{snr}.pt"
+    conf = get_conf()
+    paths = get_paths()
 
-        testset_root = f"{radar_path}/{data_dir}/testset/{conf['f_s']}fs/{snr}SNR"
+    os.system(f"mkdir -p {paths['plot_path']}")
+    for snr in conf["SNR"]:
+        cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
+
+        testset_root = f"{paths['radar_path']}/{paths['data_dir']}/testset/{conf['f_s']}fs/{snr}SNR"
         testds = ds.DatasetFolder(testset_root, dataloader, extensions=("npy",))
         testLoader = torch.utils.data.DataLoader(
             testds, conf["batch_size"], shuffle=True, num_workers=2
@@ -266,4 +157,4 @@ def test():
         print(f"SNR: {snr} dB")
 
         net = HybridRadarClassifier(conf)
-        common_test(conf, net, snr, cur_model_path, testLoader, plot_dir=plot_path)
+        common_test(conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_path"])
