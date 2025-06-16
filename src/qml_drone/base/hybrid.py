@@ -5,11 +5,16 @@ import torch.nn.functional as F
 import numpy as np
 import torchvision.datasets as ds
 import os
-from .common import train as common_train, test as common_test, dataloader, get_outputs, get_conf, get_paths
+from .common import (
+    train as common_train,
+    test as common_test,
+    dataloader,
+    get_outputs,
+    get_conf,
+    get_paths,
+)
 
 # ----------------------------STUFF---------------------------------------
-
-
 
 
 n_qlayers = 4
@@ -22,11 +27,11 @@ def set_qlayers(num_qlayers: int):
 
 
 # ----------------------------MODEL DEFINITION----------------------------------
+
 n_qubits = 5
 dev = qml.device("default.qubit", wires=n_qubits)
 
 
-# qnode shared within the HybridRadarClassifier class, and between the detection and classification models
 @qml.qnode(dev)
 def qnode(inputs, weights):
     qml.AngleEmbedding(inputs, wires=range(n_qubits))
@@ -157,4 +162,6 @@ def test():
         print(f"SNR: {snr} dB")
 
         net = HybridRadarClassifier(conf)
-        common_test(conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_path"])
+        common_test(
+            conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_path"]
+        )
