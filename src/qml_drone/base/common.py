@@ -8,134 +8,7 @@ import matplotlib.pyplot as plt
 from mlxtend.plotting import plot_confusion_matrix
 from sklearn.metrics import confusion_matrix
 from torcheval.metrics.functional import multiclass_f1_score
-
-# ---------------------------STUFF-------------------------------------
-
-roc_curve_minimum = 1e-3
-drone_type_map = [
-    "DJI_Matrice_300_RTK",
-    "DJI_Mavic_Air_2",
-    "DJI_Mavic_Mini",
-    "DJI_Phantom_4",
-    "Parrot_Disco",
-]
-confm_class_map = ["Drones", "Noise"]
-model_snr = 5
-
-num_outputs: int = None
-
-
-def set_outputs(outputs: int):
-    global num_outputs
-    num_outputs = outputs
-
-
-def get_outputs():
-    global num_outputs
-    if num_outputs is None:
-        raise Exception(
-            "Number of outputs not configured. Use set_outputs to set the number of outputs."
-        )
-    return num_outputs
-
-
-# this should be customizable
-drone_type_map = [
-    "DJI_Matrice_300_RTK",
-    "DJI_Mavic_Air_2",
-    "DJI_Mavic_Mini",
-    "DJI_Phantom_4",
-    "Parrot_Disco",
-]
-confm_class_map = ["Drones", "Noise"]
-# same with this
-paths = {
-    "radar_path": "Radar",
-    "data_dir": "two_sided",
-    "model_dir": "two_sided_models",
-    "plot_dir": "two_sided_plots",
-}
-
-
-def set_root_dir(path):
-    global paths
-    paths["radar_path"] = path
-    paths["model_path"] = f"{paths['radar_path']}/{paths['model_dir']}"
-    paths["plot_path"] = f"{paths['radar_path']}/{paths['plot_dir']}"
-
-
-def get_paths():
-    global paths
-    return paths.copy()
-
-
-# ---------------------------MODEL CONFIG-----------------------------------
-
-conf = {}
-conf["f_s"] = 10_000
-conf["SNR"] = [20, 15, 10, 5, 0, -5]
-conf["batch_size"] = 8
-conf["epochs"] = 200
-conf["min_epochs"] = 50
-conf["learning_rate"] = 0.001  # these should be parameters
-conf["save_model"] = True
-conf["model_name"] = "hybrid-parallel-model"
-conf["plot_confusion"] = True
-conf["model_type"] = "classification"
-
-
-def set_f_s(f_s: int):
-    global conf
-    conf["f_s"] = f_s
-
-
-def set_snr(snr: list[int]):
-    global conf
-    conf["SNR"] = snr
-
-
-def set_batch_size(batch_size: int):
-    global conf
-    conf["batch_size"] = batch_size
-
-
-def set_epochs(epochs: int):
-    global conf
-    conf["epochs"] = epochs
-
-
-def set_min_epochs(min_epochs: int):
-    global conf
-    conf["min_epochs"] = min_epochs
-
-
-def set_learning_rate(learning_rate: float):
-    conf["learning_rate"] = learning_rate
-
-
-def set_save_model(save_model: bool):
-    conf["save_model"] = save_model
-
-
-def set_model_name(model_name: str):
-    conf["model_name"] = model_name
-
-
-def plot_confmat(plot: bool):
-    conf["plot_confusion"] = plot
-
-
-def set_model_type(model_type: str):
-    global conf, data_dir, model_dir, plot_dir
-    model_type_lower = model_type.lower()
-    if model_type_lower != "classification" and model_type_lower != "detection":
-        raise Exception("Model type is invalid. Must be detection or classification.")
-    conf["model_type"] = model_type_lower
-
-
-def get_conf():
-    global conf
-    return conf.copy()
+from .config import get_model_snr, get_drone_type_map, get_confm_class_map
 
 
 # ---------------------------GENERAL---------------------------------------
@@ -155,6 +28,7 @@ def dataloader(file_extension):
     data = np.load(file_extension)
     return data
 
+roc_curve_minimum = 1e-3
 
 # ---------------------------PLOTTING--------------------------------------
 
@@ -174,6 +48,7 @@ def plot_multiclass_roc(
 ):
     lb = LabelBinarizer().fit(target)
     one_hot_target = lb.transform(target)
+    drone_type_map = get_drone_type_map()
 
     fig, ax = plt.subplots(figsize=(5, 5))
     colors = cycle(["#348ABD", "#b74331", "#8EBA42", "#FBC15E", "#988ED5"])
@@ -287,6 +162,10 @@ def test(conf, net, snr, cur_model_path, testLoader, plot_dir=None, pos_label=No
     target = None
 
     loss_fn = nn.CrossEntropyLoss().to(device)
+
+    drone_type_map = get_drone_type_map()
+    model_snr = get_model_snr()
+    confm_class_map = get_confm_class_map()
 
     confm = np.zeros((net.outputs, net.outputs), dtype=int)
     for i, data in enumerate(testLoader):

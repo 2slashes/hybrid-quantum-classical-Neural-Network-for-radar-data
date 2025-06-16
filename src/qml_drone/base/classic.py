@@ -6,10 +6,8 @@ from .common import (
     train as common_train,
     test as common_test,
     dataloader,
-    get_conf,
-    get_paths,
-    get_outputs,
 )
+from .config import get_conf, get_outputs, get_paths
 
 
 class ClassicalRadarClassifier(nn.Module):
