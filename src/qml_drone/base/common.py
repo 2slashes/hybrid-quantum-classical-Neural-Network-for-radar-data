@@ -53,7 +53,7 @@ paths = {
     "radar_path": "Radar",
     "data_dir": "two_sided",
     "model_dir": "two_sided_models",
-    "plot_dir": "two_sided_plots"
+    "plot_dir": "two_sided_plots",
 }
 
 
@@ -63,12 +63,13 @@ def set_root_dir(path):
     paths["model_path"] = f"{paths['radar_path']}/{paths['model_dir']}"
     paths["plot_path"] = f"{paths['radar_path']}/{paths['plot_dir']}"
 
+
 def get_paths():
     global paths
     return paths.copy()
 
 
-#---------------------------MODEL CONFIG-----------------------------------
+# ---------------------------MODEL CONFIG-----------------------------------
 
 conf = {}
 conf["f_s"] = 10_000
@@ -131,9 +132,11 @@ def set_model_type(model_type: str):
         raise Exception("Model type is invalid. Must be detection or classification.")
     conf["model_type"] = model_type_lower
 
+
 def get_conf():
     global conf
     return conf.copy()
+
 
 # ---------------------------GENERAL---------------------------------------
 
@@ -216,7 +219,7 @@ def plot_sklearn_roc_curve(
         tpr = np.delete(tpr, zero_indices)
     else:
         fpr[np.isclose(fpr, 0)] = 1e-5
-    roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr, estimator_name=None).plot()
+    roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr, name=None).plot()
     roc_display.figure_.set_size_inches(5, 5)
     roc_display.ax_.set_xscale("log")
     roc_display.ax_.set_xlim(roc_curve_minimum, 1.0)
@@ -270,9 +273,7 @@ def train(conf, net, model_path, trainLoader):
         torch.save(net.state_dict(), model_path)
 
 
-def test(
-    conf, net, snr, cur_model_path, testLoader, plot_dir=None, pos_label=None
-):
+def test(conf, net, snr, cur_model_path, testLoader, plot_dir=None, pos_label=None):
     global device
     net = net.to(device)
     net.load_state_dict(torch.load(cur_model_path))
