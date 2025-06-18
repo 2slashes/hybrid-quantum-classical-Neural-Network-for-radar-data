@@ -50,10 +50,11 @@ def train():
     conf = get_conf()
     paths = get_paths()
 
-    os.system(f"mkdir -p {paths['model_path']}")
-    for snr in conf["SNR"]:
-        cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
-        trainset_root = f"{paths['radar_path']}/{paths['data_dir']}/trainset/{conf['f_s']}fs/{snr}SNR"
+    os.system(f"mkdir -p {paths['model_dir']}")
+    for snr in conf["snr"]:
+        cur_model_path = f"{paths['model_dir']}/{conf['model_name']}-{snr}.pt"
+        # assumes train data is split by SNR
+        trainset_root = f"{paths['train_data_dir']}/{conf['f_s']}fs/{snr}SNR"
         trainds = ds.DatasetFolder(trainset_root, dataloader, extensions=("npy",))
         trainLoader = torch.utils.data.DataLoader(
             trainds, conf["batch_size"], shuffle=True, num_workers=2
@@ -71,11 +72,11 @@ def test():
     conf = get_conf()
     paths = get_paths()
 
-    os.system(f"mkdir -p {paths['plot_path']}")
-    for snr in conf["SNR"]:
-        cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
-
-        testset_root = f"{paths['radar_path']}/{paths['data_dir']}/testset/{conf['f_s']}fs/{snr}SNR"
+    os.system(f"mkdir -p {paths['plot_dir']}")
+    for snr in conf["snr"]:
+        cur_model_path = f"{paths['model_dir']}/{conf['model_name']}-{snr}.pt"
+        # assumes the test data is split by SNR
+        testset_root = f"{paths['test_data_dir']}/{conf['f_s']}fs/{snr}SNR"
         testds = ds.DatasetFolder(testset_root, dataloader, extensions=("npy",))
         testLoader = torch.utils.data.DataLoader(
             testds, conf["batch_size"], shuffle=True, num_workers=2
@@ -85,5 +86,5 @@ def test():
 
         net = ClassicalRadarClassifier(conf)
         common_test(
-            conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_path"]
+            conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_dir"]
         )

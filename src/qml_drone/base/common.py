@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from mlxtend.plotting import plot_confusion_matrix
 from sklearn.metrics import confusion_matrix
 from torcheval.metrics.functional import multiclass_f1_score
-from .config import get_model_snr, get_drone_type_map, get_confm_class_map
+from .config import get_model_snr, get_classes
 
 
 # ---------------------------GENERAL---------------------------------------
@@ -48,7 +48,7 @@ def plot_multiclass_roc(
 ):
     lb = LabelBinarizer().fit(target)
     one_hot_target = lb.transform(target)
-    drone_type_map = get_drone_type_map()
+    classes = get_classes()
 
     fig, ax = plt.subplots(figsize=(5, 5))
     colors = cycle(["#348ABD", "#b74331", "#8EBA42", "#FBC15E", "#988ED5"])
@@ -61,7 +61,7 @@ def plot_multiclass_roc(
         else:
             fpr[np.isclose(fpr, 0)] = 1e-10
         display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot(
-            name=f"{drone_type_map[class_id]}", ax=ax, color=color
+            name=f"{classes[class_id]}", ax=ax, color=color
         )
     if semilog_axes is True:
         display.ax_.set_xscale("log")
@@ -122,7 +122,6 @@ def train(conf, net, model_path, trainLoader):
     net = net.to(device)
     optim = torch.optim.AdamW(net.parameters(), lr=conf["learning_rate"])
     loss_fn = nn.CrossEntropyLoss().to(device)
-
     for x in range(conf["epochs"]):
         net.train()
 
@@ -163,9 +162,8 @@ def test(conf, net, snr, cur_model_path, testLoader, plot_dir=None, pos_label=No
 
     loss_fn = nn.CrossEntropyLoss().to(device)
 
-    drone_type_map = get_drone_type_map()
+    classes = get_classes()
     model_snr = get_model_snr()
-    confm_class_map = get_confm_class_map()
 
     confm = np.zeros((net.outputs, net.outputs), dtype=int)
     for i, data in enumerate(testLoader):
@@ -234,14 +232,14 @@ def test(conf, net, snr, cur_model_path, testLoader, plot_dir=None, pos_label=No
                 conf_mat=confm,
                 show_normed=True,
                 colorbar=True,
-                class_names=drone_type_map,
+                class_names=classes,
             )
         else:
             fig, ax = plot_confusion_matrix(
                 conf_mat=confm,
                 show_normed=True,
                 colorbar=True,
-                class_names=confm_class_map,
+                class_names=classes,
             )
         ax.set_title(f"Confusion matrix for SNR {snr}dB")
         plt.tight_layout()

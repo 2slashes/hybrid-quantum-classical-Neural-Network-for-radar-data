@@ -127,7 +127,7 @@ def train():
     paths = get_paths()
 
     os.system(f"mkdir -p {paths['model_path']}")
-    for snr in conf["SNR"]:
+    for snr in conf["snr"]:
         cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
         trainset_root = f"{paths['radar_path']}/{paths['data_dir']}/trainset/{conf['f_s']}fs/{snr}SNR"
         trainds = ds.DatasetFolder(trainset_root, dataloader, extensions=("npy",))
@@ -148,7 +148,7 @@ def test():
     paths = get_paths()
 
     os.system(f"mkdir -p {paths['plot_path']}")
-    for snr in conf["SNR"]:
+    for snr in conf["snr"]:
         cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
 
         testset_root = f"{paths['radar_path']}/{paths['data_dir']}/testset/{conf['f_s']}fs/{snr}SNR"
