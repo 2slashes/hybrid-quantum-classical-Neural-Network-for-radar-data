@@ -87,70 +87,12 @@ conf["model_name"] = "qml-drone-model"
 conf["plot_confusion"] = True
 conf["model_type"] = "classification"
 conf["num_outputs"] = None
-
-
-def set_f_s(f_s: int):
-    global conf
-    conf["f_s"] = f_s
-
-
-def set_snr(snr: list[int]):
-    global conf
-    conf["snr"] = snr
-
-
-def set_batch_size(batch_size: int):
-    global conf
-    conf["batch_size"] = batch_size
-
-
-def set_epochs(epochs: int):
-    global conf
-    conf["epochs"] = epochs
-
-
-def set_min_epochs(min_epochs: int):
-    global conf
-    conf["min_epochs"] = min_epochs
-
-
-def set_learning_rate(learning_rate: float):
-    conf["learning_rate"] = learning_rate
-
-
-def set_save_model(save_model: bool):
-    conf["save_model"] = save_model
-
-
-def set_model_name(model_name: str):
-    conf["model_name"] = model_name
-
-
-def plot_confmat(plot: bool):
-    conf["plot_confusion"] = plot
-
-
-def set_model_type(model_type: str):
-    global conf, data_dir, model_dir, plot_dir
-    model_type_lower = model_type.lower()
-    if model_type_lower != "classification" and model_type_lower != "detection":
-        raise Exception("Model type is invalid. Must be detection or classification.")
-    conf["model_type"] = model_type_lower
+conf["num_qlayers"] = 4  # number of quantum layers, not used in classical models
 
 
 def get_conf():
     global conf
     return conf.copy()
-
-
-def set_outputs(outputs: int):
-    global conf
-    conf["num_outputs"] = outputs
-
-
-def get_outputs():
-    global conf
-    return conf["num_outputs"]
 
 
 def set_conf(user_conf, num_classes):
@@ -200,15 +142,20 @@ def set_conf(user_conf, num_classes):
         raise Exception("save_model must be a boolean.")
     if not isinstance(user_conf["model_name"], str) or len(user_conf["model_name"]) == 0:
         raise Exception("model_name must be a non-empty string.")
-    
     if not isinstance(user_conf["plot_confusion"], bool):
         raise Exception("plot_confusion must be a boolean.")
+    if user_conf["model_type"] != "detection" and user_conf["model_type"] != "classification":
+        raise Exception("model_type must be either 'detection' or 'classification'.")
+    if "num_qlayers" in user_conf and (not isinstance(user_conf["num_qlayers"], int) or user_conf["num_qlayers"]) <= 0:
+        raise Exception("num_qlayers must be a positive integer.")
     
     # copy only values that are present in 'conf' already
     for key in conf:
         if key in user_conf:
             conf[key] = user_conf[key]
     # manually add num_outputs as the number of classes
+    if user_conf["model_type"] == "detection" and num_classes != 2:
+        raise Exception("Detection model must have exactly 2 classes (e.g. Signal or Noise).")
     conf["num_outputs"] = num_classes
 
 

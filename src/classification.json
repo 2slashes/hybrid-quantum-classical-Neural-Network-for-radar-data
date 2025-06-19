@@ -8,16 +8,17 @@
     
     "modelConfig": {
         "f_s": 10000,
-        "snr": [20, 15, 10],
+        "snr": [20],
         "batch_size": 8,
-        "epochs": 50,
+        "epochs": 1,
         "min_epochs": 1,
-        "loss_threshold": 0.001,
+        "loss_threshold": 0.01,
         "learning_rate": 0.001,
         "save_model": true,
-        "model_name": "qml-drone-model",
+        "model_name": "classification-model",
         "plot_confusion": true,
-        "model_type": "detection"
+        "model_type": "classification",
+        "num_qlayers": 4
     },
 
     "classes": [

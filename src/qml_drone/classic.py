@@ -7,13 +7,13 @@ from .common import (
     test as common_test,
     dataloader,
 )
-from .config import get_conf, get_outputs, get_paths
+from .config import get_conf, get_paths
 
 
 class ClassicalRadarClassifier(nn.Module):
     def __init__(self, conf):
         super(ClassicalRadarClassifier, self).__init__()
-        self.outputs = get_outputs()
+        self.outputs = get_conf()["num_outputs"]
         # i/p shape - (batch_size, Channel_in, Height_in, Width_in) - (2, 16, 251)
         self.conv1 = nn.Conv2d(2, 16, (3, 3), padding=1)  # o/p shape - (16, 16, 251)
         self.IN1 = nn.InstanceNorm2d(16)
@@ -88,3 +88,7 @@ def test():
         common_test(
             conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_dir"]
         )
+
+def create():
+    train()
+    test()

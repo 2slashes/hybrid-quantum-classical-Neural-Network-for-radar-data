@@ -10,24 +10,47 @@ from .common import (
     test as common_test,
     dataloader,
 )
-from .config import get_conf, get_outputs, get_paths
+from .config import get_conf, get_paths
+
+from abc import abstractmethod
 
 # ----------------------------STUFF---------------------------------------
 
 
-n_qlayers = 4
+# n_qlayers = 4
 
 
-def set_qlayers(num_qlayers: int):
-    # set the number of parallel qlayers
-    global n_qlayers
-    n_qlayers = num_qlayers
+# def set_qlayers(num_qlayers: int):
+#     # set the number of parallel qlayers
+#     global n_qlayers
+#     n_qlayers = num_qlayers
 
 
 # ----------------------------MODEL DEFINITION----------------------------------
 
 n_qubits = 5
 dev = qml.device("default.qubit", wires=n_qubits)
+
+
+class QuantumLayer:
+    @abstractmethod
+    def circuit():
+        pass
+
+class OriginalCircuit(QuantumLayer):
+    @qml.node(dev)
+    def circuit(inputs):
+        qml.AngleEmbedding(inputs, wires=range(n_qubits))
+        qml.BasicEntanglerLayers(weights, wires=range(n_qubits))
+        return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
+    
+class FullyEngangled(QuantumLayer):
+    @qml.node(dev)
+    def circuit(inputs):
+        qml.AngleEmbedding(inputs, wires=range(n_qubits))
+        qml.StrongentanglerLayers(weights, wires=range(n_qubits))
+        return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
+
 
 
 @qml.qnode(dev)
@@ -41,14 +64,19 @@ def qnode(inputs, weights):
 n_layers = 3
 weight_shapes = {"weights": (n_layers, n_qubits)}
 
+# Draw the circuit
+
 
 # This class is shared between the detection and classification models
 # Detection model has 2 outputs, classification has 5 outputs, otherwise they are identical
 # it might be possible that more outputs are desired for classification, maybe it should be an input
+
+
+
 class HybridRadarClassifier(nn.Module):
-    def __init__(self, conf):
+    def __init__(self, conf, circuit):
         super(HybridRadarClassifier, self).__init__()
-        self.outputs = get_outputs()
+        self.outputs = get_conf()["num_outputs"]
         # i/p shape - (batch_size, Channel_in, Height_in, Width_in) - (2, 16, 251)
         self.conv1 = nn.Conv2d(2, 16, (3, 3), padding=1)  # o/p shape - (16, 16, 251)
         self.IN1 = nn.InstanceNorm2d(16)
@@ -63,9 +91,9 @@ class HybridRadarClassifier(nn.Module):
         # self.qlayer3 = qml.qnn.TorchLayer(qnode, weight_shapes)
         # self.qlayer4 = qml.qnn.TorchLayer(qnode, weight_shapes)
         self.qlayers = []
-        global n_qlayers
+        n_qlayers = get_conf()["num_qlayers"]
         for i in range(n_qlayers):
-            self.qlayers.append(qml.qnn.TorchLayer(qnode, weight_shapes))
+            self.qlayers.append(qml.qnn.TorchLayer(circuit, weight_shapes))
 
         # fully connected layers
         self.fc1 = nn.Linear(32 * 12 * 21, 120)
@@ -126,10 +154,10 @@ def train():
     conf = get_conf()
     paths = get_paths()
 
-    os.system(f"mkdir -p {paths['model_path']}")
+    os.system(f"mkdir -p {paths['model_dir']}")
     for snr in conf["snr"]:
-        cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
-        trainset_root = f"{paths['radar_path']}/{paths['data_dir']}/trainset/{conf['f_s']}fs/{snr}SNR"
+        cur_model_path = f"{paths['model_dir']}/{conf['model_name']}-{snr}.pt"
+        trainset_root = f"{paths['train_data_dir']}/{conf['f_s']}fs/{snr}SNR"
         trainds = ds.DatasetFolder(trainset_root, dataloader, extensions=("npy",))
         trainLoader = torch.utils.data.DataLoader(
             trainds, conf["batch_size"], shuffle=True, num_workers=2
@@ -147,11 +175,11 @@ def test():
     conf = get_conf()
     paths = get_paths()
 
-    os.system(f"mkdir -p {paths['plot_path']}")
+    os.system(f"mkdir -p {paths['plot_dir']}")
     for snr in conf["snr"]:
-        cur_model_path = f"{paths['model_path']}/{conf['model_name']}-{snr}.pt"
+        cur_model_path = f"{paths['model_dir']}/{conf['model_name']}-{snr}.pt"
 
-        testset_root = f"{paths['radar_path']}/{paths['data_dir']}/testset/{conf['f_s']}fs/{snr}SNR"
+        testset_root = f"{paths['test_data_dir']}/{conf['f_s']}fs/{snr}SNR"
         testds = ds.DatasetFolder(testset_root, dataloader, extensions=("npy",))
         testLoader = torch.utils.data.DataLoader(
             testds, conf["batch_size"], shuffle=True, num_workers=2
@@ -161,5 +189,9 @@ def test():
 
         net = HybridRadarClassifier(conf)
         common_test(
-            conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_path"]
+            conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_dir"]
         )
+
+def create():
+    train()
+    test()
