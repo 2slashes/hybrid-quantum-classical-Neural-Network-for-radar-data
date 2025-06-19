@@ -12,8 +12,6 @@ from .common import (
 )
 from .config import get_conf, get_paths
 
-from abc import abstractmethod
-
 # ----------------------------STUFF---------------------------------------
 
 
@@ -28,43 +26,16 @@ from abc import abstractmethod
 
 # ----------------------------MODEL DEFINITION----------------------------------
 
-n_qubits = 5
-dev = qml.device("default.qubit", wires=n_qubits)
-
-
-class QuantumLayer:
-    @abstractmethod
-    def circuit():
-        pass
-
-class OriginalCircuit(QuantumLayer):
-    @qml.node(dev)
-    def circuit(inputs):
-        qml.AngleEmbedding(inputs, wires=range(n_qubits))
-        qml.BasicEntanglerLayers(weights, wires=range(n_qubits))
-        return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
-    
-class FullyEngangled(QuantumLayer):
-    @qml.node(dev)
-    def circuit(inputs):
-        qml.AngleEmbedding(inputs, wires=range(n_qubits))
-        qml.StrongentanglerLayers(weights, wires=range(n_qubits))
-        return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
 
 
 
-@qml.qnode(dev)
-def qnode(inputs, weights):
-    qml.AngleEmbedding(inputs, wires=range(n_qubits))
-    qml.BasicEntanglerLayers(weights, wires=range(n_qubits))
-    return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
+# @qml.qnode(dev)
+# def qnode(inputs, weights):
+#     qml.AngleEmbedding(inputs, wires=range(n_qubits))
+#     qml.BasicEntanglerLayers(weights, wires=range(n_qubits))
+#     return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
 
 
-# Define the QLayer
-n_layers = 3
-weight_shapes = {"weights": (n_layers, n_qubits)}
-
-# Draw the circuit
 
 
 # This class is shared between the detection and classification models
@@ -74,9 +45,9 @@ weight_shapes = {"weights": (n_layers, n_qubits)}
 
 
 class HybridRadarClassifier(nn.Module):
-    def __init__(self, conf, circuit):
+    def __init__(self, conf, circuit, weight_shapes):
         super(HybridRadarClassifier, self).__init__()
-        self.outputs = get_conf()["num_outputs"]
+        self.outputs = conf["num_outputs"]
         # i/p shape - (batch_size, Channel_in, Height_in, Width_in) - (2, 16, 251)
         self.conv1 = nn.Conv2d(2, 16, (3, 3), padding=1)  # o/p shape - (16, 16, 251)
         self.IN1 = nn.InstanceNorm2d(16)
@@ -91,8 +62,8 @@ class HybridRadarClassifier(nn.Module):
         # self.qlayer3 = qml.qnn.TorchLayer(qnode, weight_shapes)
         # self.qlayer4 = qml.qnn.TorchLayer(qnode, weight_shapes)
         self.qlayers = []
-        n_qlayers = get_conf()["num_qlayers"]
-        for i in range(n_qlayers):
+        n_qlayers = conf["num_qlayers"]
+        for _ in range(n_qlayers):
             self.qlayers.append(qml.qnn.TorchLayer(circuit, weight_shapes))
 
         # fully connected layers
@@ -150,9 +121,11 @@ class HybridRadarClassifier(nn.Module):
 # ----------------------TRAINING CODE-----------------------
 
 
-def train():
-    conf = get_conf()
+def train(conf, qlayer):
     paths = get_paths()
+
+    circuit = qlayer.circuit
+    weight_shapes = qlayer.weight_shapes
 
     os.system(f"mkdir -p {paths['model_dir']}")
     for snr in conf["snr"]:
@@ -164,16 +137,18 @@ def train():
         )
 
         print(f"SNR: {snr} dB")
-        net = HybridRadarClassifier(conf)
+        net = HybridRadarClassifier(conf, circuit, weight_shapes)
         common_train(conf, net, cur_model_path, trainLoader)
 
 
 # ---------------------EVALUATION------------------------------
 
 
-def test():
-    conf = get_conf()
+def test(conf, qlayer):
     paths = get_paths()
+
+    circuit = qlayer.circuit
+    weight_shapes = qlayer.weight_shapes
 
     os.system(f"mkdir -p {paths['plot_dir']}")
     for snr in conf["snr"]:
@@ -187,11 +162,12 @@ def test():
 
         print(f"SNR: {snr} dB")
 
-        net = HybridRadarClassifier(conf)
+        net = HybridRadarClassifier(conf, circuit, weight_shapes)
         common_test(
             conf, net, snr, cur_model_path, testLoader, plot_dir=paths["plot_dir"]
         )
 
-def create():
-    train()
-    test()
+def create(qlayer):
+    conf = get_conf()
+    train(conf, qlayer)
+    test(conf, qlayer)
