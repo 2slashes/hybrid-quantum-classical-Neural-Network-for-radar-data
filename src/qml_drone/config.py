@@ -1,4 +1,4 @@
-import json
+import yaml
 
 # ---------------------FILE PATHS-------------------------
 
@@ -118,50 +118,73 @@ def set_conf(user_conf, num_classes):
         )
     global conf
     if "num_outputs" in user_conf:
-        if not isinstance(user_conf["num_outputs"], int) or user_conf["num_outputs"] <= 0:
+        if (
+            not isinstance(user_conf["num_outputs"], int)
+            or user_conf["num_outputs"] <= 0
+        ):
             raise Exception("num_outputs must be a positive integer.")
     else:
         user_conf["num_outputs"] = num_classes
     if not isinstance(user_conf["snr"], list) or len(user_conf["snr"]) == 0:
         raise Exception("snr must be a non-empty list.")
     if not all(isinstance(snr, int) for snr in user_conf["snr"]):
-        raise Exception("All SNR values must be integers.") # unsure if the SNR values can be floats
+        raise Exception(
+            "All SNR values must be integers."
+        )  # unsure if the SNR values can be floats
     if not isinstance(user_conf["f_s"], int):
-        raise Exception("f_s must be an integer.") # not sure what f_s is
+        raise Exception("f_s must be an integer.")  # not sure what f_s is
     if not isinstance(user_conf["batch_size"], int) or user_conf["batch_size"] <= 0:
         raise Exception("batch_size must be a positive integer.")
     if not isinstance(user_conf["epochs"], int) or user_conf["epochs"] <= 0:
         raise Exception("epochs must be a positive integer.")
     if not isinstance(user_conf["min_epochs"], int) or user_conf["min_epochs"] <= 0:
         raise Exception("min_epochs must be a positive integer.")
-    if not isinstance(user_conf["loss_threshold"], float) or user_conf["loss_threshold"] <= 0:
+    if (
+        not isinstance(user_conf["loss_threshold"], float)
+        or user_conf["loss_threshold"] <= 0
+    ):
         raise Exception("loss_threshold must be a positive float.")
-    if not isinstance(user_conf["learning_rate"], float) or user_conf["learning_rate"] <= 0:
+    if (
+        not isinstance(user_conf["learning_rate"], float)
+        or user_conf["learning_rate"] <= 0
+    ):
         raise Exception("learning_rate must be a positive float.")
     if not isinstance(user_conf["save_model"], bool):
         raise Exception("save_model must be a boolean.")
-    if not isinstance(user_conf["model_name"], str) or len(user_conf["model_name"]) == 0:
+    if (
+        not isinstance(user_conf["model_name"], str)
+        or len(user_conf["model_name"]) == 0
+    ):
         raise Exception("model_name must be a non-empty string.")
     if not isinstance(user_conf["plot_confusion"], bool):
         raise Exception("plot_confusion must be a boolean.")
-    if user_conf["model_type"] != "detection" and user_conf["model_type"] != "classification":
+    if (
+        user_conf["model_type"] != "detection"
+        and user_conf["model_type"] != "classification"
+    ):
         raise Exception("model_type must be either 'detection' or 'classification'.")
-    if "num_qlayers" in user_conf and (not isinstance(user_conf["num_qlayers"], int) or user_conf["num_qlayers"]) <= 0:
+    if (
+        "num_qlayers" in user_conf
+        and (not isinstance(user_conf["num_qlayers"], int) or user_conf["num_qlayers"])
+        <= 0
+    ):
         raise Exception("num_qlayers must be a positive integer.")
-    
+
     # copy only values that are present in 'conf' already
     for key in conf:
         if key in user_conf:
             conf[key] = user_conf[key]
     # manually add num_outputs as the number of classes
     if user_conf["model_type"] == "detection" and num_classes != 2:
-        raise Exception("Detection model must have exactly 2 classes (e.g. Signal or Noise).")
+        raise Exception(
+            "Detection model must have exactly 2 classes (e.g. Signal or Noise)."
+        )
     conf["num_outputs"] = num_classes
 
 
-def load_json(json_path):
-    with open(json_path, "r") as file:
-        data = json.load(file)
+def load_yaml(yaml_path):
+    with open(yaml_path, "r") as file:
+        data = yaml.safe_load(file)
 
         set_classes(data["classes"])
 

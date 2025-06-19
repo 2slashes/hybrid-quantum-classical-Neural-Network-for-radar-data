@@ -16,5 +16,6 @@ RUN pip3 install pandas
 RUN pip3 install wandb
 RUN pip3 install mlxtend
 RUN pip3 install torcheval
+RUN pip3 install pyyaml
 
 WORKDIR /workspace

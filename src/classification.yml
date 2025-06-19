@@ -1,0 +1,28 @@
+---
+paths:
+  train_data_dir: "../original/Radar/two_sided/trainset"
+  test_data_dir: "../original/Radar/two_sided/testset"
+  model_dir: "../original/Radar/two_sided_models"
+  plot_dir: "../original/Radar/two_sided_plots"
+modelConfig:
+  f_s: 10000
+  snr:
+  - 20
+  - 15
+  - 10
+  batch_size: 8
+  epochs: 1
+  min_epochs: 1
+  loss_threshold: 0.01
+  learning_rate: 0.001
+  save_model: true
+  model_name: "classification-model"
+  plot_confusion: true
+  model_type: "classification"
+  num_qlayers: 4
+classes:
+- "DJI_Matrice_300_RTK"
+- "DJI_Mavic_Air_2"
+- "DJI_Mavic_Mini"
+- "DJI_Phantom_4"
+- "Parrot_Disco"

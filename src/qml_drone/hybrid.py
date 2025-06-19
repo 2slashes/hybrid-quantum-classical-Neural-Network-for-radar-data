@@ -56,11 +56,7 @@ class HybridRadarClassifier(nn.Module):
         self.IN2 = nn.InstanceNorm2d(32)
         self.pool2 = nn.MaxPool2d(2, 2)  # o/p shape (32, 4, 63)
 
-        # quantum layer
-        # self.qlayer1 = qml.qnn.TorchLayer(qnode, weight_shapes)
-        # self.qlayer2 = qml.qnn.TorchLayer(qnode, weight_shapes)
-        # self.qlayer3 = qml.qnn.TorchLayer(qnode, weight_shapes)
-        # self.qlayer4 = qml.qnn.TorchLayer(qnode, weight_shapes)
+        # initialize the required number of qlayers
         self.qlayers = []
         n_qlayers = conf["num_qlayers"]
         for _ in range(n_qlayers):
@@ -92,20 +88,12 @@ class HybridRadarClassifier(nn.Module):
         # Make sure the values are normalised to lie in the range [0,pi]
         # since the qnodes are using angle embedding
         x = F.normalize(x) * np.pi
-        global n_qlayers
 
-        # x_1, x_2, x_3, x_4 = torch.split(x, 5, dim=1)
         x_split = torch.split(x, 5, dim=1)
         post_qlayer = []
         for chunk, qlayer in zip(x_split, self.qlayers):
             post_qlayer.append(qlayer(chunk))
-        # print(f"input {x_1=}")
-        # x_1 = self.qlayer1(x_1)
-        # x_2 = self.qlayer2(x_2)
-        # x_3 = self.qlayer3(x_3)
-        # x_4 = self.qlayer4(x_4)
-        # print(f"output {x_1=}")
-        # x = torch.cat([x_1, x_2, x_3, x_4], axis=1)
+
         x = torch.cat(post_qlayer, axis=1)
 
         # if we want qlayers connected serially?
