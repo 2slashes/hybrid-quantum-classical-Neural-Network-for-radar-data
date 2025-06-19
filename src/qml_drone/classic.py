@@ -13,7 +13,7 @@ from .config import get_conf, get_paths
 class ClassicalRadarClassifier(nn.Module):
     def __init__(self, conf):
         super(ClassicalRadarClassifier, self).__init__()
-        self.outputs = get_conf()["num_outputs"]
+        self.outputs = conf["num_outputs"]
         # i/p shape - (batch_size, Channel_in, Height_in, Width_in) - (2, 16, 251)
         self.conv1 = nn.Conv2d(2, 16, (3, 3), padding=1)  # o/p shape - (16, 16, 251)
         self.IN1 = nn.InstanceNorm2d(16)
@@ -46,8 +46,7 @@ class ClassicalRadarClassifier(nn.Module):
 # ----------------------TRAINING CODE-----------------------
 
 
-def train():
-    conf = get_conf()
+def train(conf):
     paths = get_paths()
 
     os.system(f"mkdir -p {paths['model_dir']}")
@@ -68,8 +67,7 @@ def train():
 # ---------------------EVALUATION------------------------------
 
 
-def test():
-    conf = get_conf()
+def test(conf):
     paths = get_paths()
 
     os.system(f"mkdir -p {paths['plot_dir']}")
@@ -90,5 +88,6 @@ def test():
         )
 
 def create():
-    train()
-    test()
+    conf = get_conf()
+    train(conf)
+    test(conf)
