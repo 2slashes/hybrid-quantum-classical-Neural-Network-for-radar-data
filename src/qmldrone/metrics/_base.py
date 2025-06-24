@@ -9,6 +9,7 @@ from torcheval.metrics.functional import multiclass_f1_score
 from qmldrone.visualization.plot import plot_multiclass_roc, plot_sklearn_roc_curve
 from ..io._input import get_device
 
+
 def train(conf, net, model_path, trainLoader):
     device = get_device()
     net = net.to(device)
@@ -39,7 +40,17 @@ def train(conf, net, model_path, trainLoader):
         torch.save(net.state_dict(), model_path)
 
 
-def test(conf, net, snr, cur_model_path, testLoader, classes, plot_dir=None, pos_label=None, model_snr=5):
+def test(
+    conf,
+    net,
+    snr,
+    cur_model_path,
+    testLoader,
+    classes,
+    plot_dir=None,
+    pos_label=None,
+    model_snr=5,
+):
     device = get_device()
     net = net.to(device)
     net.load_state_dict(torch.load(cur_model_path))
