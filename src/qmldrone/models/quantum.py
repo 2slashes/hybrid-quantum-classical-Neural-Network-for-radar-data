@@ -14,7 +14,7 @@ class QuantumLayer:
 n_qubits = 5
 class OriginalCircuit(QuantumLayer):
     @property
-    def weight_shapes():
+    def weight_shapes(self):
         return {"weights": (3, n_qubits)}
 
     @qml.qnode(qml.device("default.qubit", wires=n_qubits))
@@ -25,7 +25,7 @@ class OriginalCircuit(QuantumLayer):
     
 class FullyEntangled(QuantumLayer):
     @property
-    def weight_shapes():
+    def weight_shapes(self):
         return {"weights": (3, n_qubits, 3)}
 
     @qml.qnode(qml.device("default.qubit", wires=n_qubits))

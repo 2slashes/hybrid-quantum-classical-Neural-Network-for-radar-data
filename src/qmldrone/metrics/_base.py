@@ -6,7 +6,7 @@ import numpy as np
 from mlxtend.plotting import plot_confusion_matrix
 from torcheval.metrics.functional import multiclass_f1_score
 
-from qmldrone.config import get_classes, get_model_snr
+from qmldrone.config import get_model_snr
 from qmldrone.visualization.plot import plot_multiclass_roc, plot_sklearn_roc_curve
 from ..io._input import get_device
 
@@ -40,8 +40,8 @@ def train(conf, net, model_path, trainLoader):
         torch.save(net.state_dict(), model_path)
 
 
-def test(conf, net, snr, cur_model_path, testLoader, plot_dir=None, pos_label=None):
-    global device
+def test(conf, net, snr, cur_model_path, testLoader, classes, plot_dir=None, pos_label=None):
+    device = get_device()
     net = net.to(device)
     net.load_state_dict(torch.load(cur_model_path))
     net.eval()
@@ -55,7 +55,6 @@ def test(conf, net, snr, cur_model_path, testLoader, plot_dir=None, pos_label=No
 
     loss_fn = nn.CrossEntropyLoss().to(device)
 
-    classes = get_classes()
     model_snr = get_model_snr()
 
     confm = np.zeros((net.outputs, net.outputs), dtype=int)

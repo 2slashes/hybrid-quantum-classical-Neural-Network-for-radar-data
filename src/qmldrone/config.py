@@ -152,13 +152,4 @@ def set_conf(user_conf, num_classes):
     conf["num_outputs"] = num_classes
 
 
-def load_yaml(yaml_path):
-    with open(yaml_path, "r") as file:
-        data = yaml.safe_load(file)
 
-        set_classes(data["classes"])
-
-        user_conf = data["modelConfig"]
-        set_conf(user_conf, len(data["classes"]))
-
-        set_paths(data["paths"], user_conf["snr"])

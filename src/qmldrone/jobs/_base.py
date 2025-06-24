@@ -6,10 +6,10 @@ import os
 
 
 def train(
-    conf,
     model_builder,
-    model_dir: str = "../original/Radartwo_sided_models",
-    train_data_dir: str = "../original/Radartwo_sided_train_data",
+    conf,
+    model_dir: str,
+    train_data_dir: str,
 ):
     os.system(f"mkdir -p {model_dir}")
     for snr in conf["snr"]:
@@ -26,11 +26,12 @@ def train(
 
 
 def test(
-    conf,
     model_builder,
-    model_dir: str = "../original/Radartwo_sided_models",
-    plot_dir: str = "../original/Radartwo_sided_plots",
-    test_data_dir: str = "../original/Radartwo_sided_test_data",
+    conf,
+    classes,
+    model_dir: str = "../original/Radar/two_sided_models",
+    plot_dir: str = "../original/Radar/two_sided_plots",
+    test_data_dir: str = "../original/Radar/two_sided/testset",
 ):
     os.system(f"mkdir -p {plot_dir}")
     for snr in conf["snr"]:
@@ -44,4 +45,4 @@ def test(
         print(f"SNR: {snr} dB")
 
         net = model_builder(conf)
-        common_test(conf, net, snr, cur_model_path, testLoader, plot_dir=plot_dir)
+        common_test(conf, net, snr, cur_model_path, testLoader, classes, plot_dir=plot_dir)

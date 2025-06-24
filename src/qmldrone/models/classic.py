@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-from ..io._input import get_conf
+from ..jobs._base import train, test
+from ..io._input import load_yaml
 
 class ClassicalRadarClassifier(nn.Module):
-    def __init__(self): 
-        conf = get_conf()
+    def __init__(self, conf: dict): 
         super(ClassicalRadarClassifier, self).__init__()
         self.outputs = conf["num_outputs"]
         # i/p shape - (batch_size, Channel_in, Height_in, Width_in) - (2, 16, 251)
@@ -34,3 +34,8 @@ class ClassicalRadarClassifier(nn.Module):
         x = self.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+    
+def create(conf_path: str):
+    conf, paths, classes = load_yaml(conf_path)
+    train(lambda c: ClassicalRadarClassifier(c), conf, paths["model_dir"], paths["train_data_dir"])
+    test(lambda c: ClassicalRadarClassifier(c), conf, classes, paths["model_dir"], paths["plot_dir"], paths["test_data_dir"])
