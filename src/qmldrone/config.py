@@ -2,36 +2,6 @@ import yaml
 
 # ---------------------FILE PATHS-------------------------
 
-paths = {
-    "train_data_dir": "../original/Radar/two_sided/trainset",
-    "test_data_dir": "../original/Radar/two_sided/testset",
-    "model_dir": "../original/Radartwo_sided_models",
-    "plot_dir": "../original/Radartwo_sided_plots",
-}
-
-
-def set_paths(user_paths, snr_list):
-    if not isinstance(user_paths, dict):
-        raise Exception("Paths must be a dictionary.")
-    if not all(
-        key in user_paths
-        for key in ["train_data_dir", "test_data_dir", "model_dir", "plot_dir"]
-    ):
-        raise Exception(
-            "Paths requires 'train_data_dir', 'test_data_dir', 'model_dir' and 'plot_dir'."
-        )
-
-    global paths
-    # copy only values that are present in 'paths' already
-    for key in paths:
-        if key in user_paths:
-            paths[key] = user_paths[key]
-
-
-def get_paths():
-    global paths
-    return paths.copy()
-
 
 # --------------------DRONE STUFF--------------------------
 
