@@ -6,7 +6,6 @@ import numpy as np
 from mlxtend.plotting import plot_confusion_matrix
 from torcheval.metrics.functional import multiclass_f1_score
 
-from qmldrone.config import get_model_snr
 from qmldrone.visualization.plot import plot_multiclass_roc, plot_sklearn_roc_curve
 from ..io._input import get_device
 
@@ -40,7 +39,7 @@ def train(conf, net, model_path, trainLoader):
         torch.save(net.state_dict(), model_path)
 
 
-def test(conf, net, snr, cur_model_path, testLoader, classes, plot_dir=None, pos_label=None):
+def test(conf, net, snr, cur_model_path, testLoader, classes, plot_dir=None, pos_label=None, model_snr=5):
     device = get_device()
     net = net.to(device)
     net.load_state_dict(torch.load(cur_model_path))
@@ -55,7 +54,6 @@ def test(conf, net, snr, cur_model_path, testLoader, classes, plot_dir=None, pos
 
     loss_fn = nn.CrossEntropyLoss().to(device)
 
-    model_snr = get_model_snr()
 
     confm = np.zeros((net.outputs, net.outputs), dtype=int)
     for i, data in enumerate(testLoader):
@@ -98,7 +96,7 @@ def test(conf, net, snr, cur_model_path, testLoader, classes, plot_dir=None, pos
                 f"{plot_dir}/hybrid_classifier_conf_model-{model_snr}_signal-{snr}.pdf"
             )
         plot_multiclass_roc(
-            target.cpu(), probabilities.cpu(), snr, plot_file=roc_plot_file
+            target.cpu(), probabilities.cpu(), snr, classes, plot_file=roc_plot_file
         )
     else:
         if pos_label is None:

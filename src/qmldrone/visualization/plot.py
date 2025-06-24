@@ -3,7 +3,6 @@ from sklearn.metrics import roc_curve, RocCurveDisplay
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
 import matplotlib.pyplot as plt
-from ..config import get_classes
 
 def plot_spectrogram(sp):
     fig, axs = plt.subplots(2, ncols=1, figsize=(14, 3))
@@ -16,11 +15,10 @@ def plot_spectrogram(sp):
 
 
 def plot_multiclass_roc(
-    target, probs, snr, plot_file=None, remove_zeros=False, semilog_axes=True, roc_curve_minimum=1e-3
+    target, probs, snr, classes, plot_file=None, remove_zeros=False, semilog_axes=True, roc_curve_minimum=1e-3
 ):
     lb = LabelBinarizer().fit(target)
     one_hot_target = lb.transform(target)
-    classes = get_classes()
 
     fig, ax = plt.subplots(figsize=(5, 5))
     colors = cycle(["#348ABD", "#b74331", "#8EBA42", "#FBC15E", "#988ED5"])

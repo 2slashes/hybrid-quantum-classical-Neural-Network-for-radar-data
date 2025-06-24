@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import pennylane as qml
 from qmldrone.io._input import load_yaml
 from .classic import ClassicalRadarClassifier
-from ..config import get_conf
 from ..jobs._base import train, test
 
 
