@@ -37,4 +37,4 @@ class ClassicalRadarClassifier(nn.Module):
 
 
 def create(conf_path: str):
-    create_base(conf_path, lambda c: ClassicalRadarClassifier)
+    create_base(conf_path, lambda c: ClassicalRadarClassifier(c))
