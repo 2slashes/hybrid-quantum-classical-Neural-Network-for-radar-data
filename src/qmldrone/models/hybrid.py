@@ -4,15 +4,15 @@ import torch.nn.functional as F
 import pennylane as qml
 from .classic import ClassicalRadarClassifier
 from ._base import create_base
+from ..io._input import get_num_qlayers_from_yaml
 
 
 class HybridRadarClassifier(ClassicalRadarClassifier):
-    def __init__(self, conf: dict, circuit, weight_shapes):
-        super(HybridRadarClassifier, self).__init__(conf)
+    def __init__(self, num_outputs, circuit, weight_shapes, n_qlayers):
+        super(HybridRadarClassifier, self).__init__(num_outputs)
 
         # initialize the required number of qlayers
         self.qlayers = []
-        n_qlayers = conf["num_qlayers"]
         for _ in range(n_qlayers):
             self.qlayers.append(qml.qnn.TorchLayer(circuit, weight_shapes))
 
@@ -50,7 +50,11 @@ class HybridRadarClassifier(ClassicalRadarClassifier):
         return x
 
 
-def create(conf_path: str, qlayer):
+def create(yaml_path: str, qlayer):
     circuit = qlayer.circuit
     weight_shapes = qlayer.weight_shapes
-    create_base(conf_path, lambda c: HybridRadarClassifier(c, circuit, weight_shapes))
+    num_qlayers = get_num_qlayers_from_yaml(yaml_path)
+    create_base(
+        yaml_path,
+        lambda n: HybridRadarClassifier(n, circuit, weight_shapes, num_qlayers),
+    )

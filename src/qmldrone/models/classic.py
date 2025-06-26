@@ -4,9 +4,9 @@ from ._base import create_base
 
 
 class ClassicalRadarClassifier(nn.Module):
-    def __init__(self, conf: dict):
+    def __init__(self, num_outputs):
         super(ClassicalRadarClassifier, self).__init__()
-        self.outputs = conf["num_outputs"]
+        self.outputs = num_outputs
         # i/p shape - (batch_size, Channel_in, Height_in, Width_in) - (2, 16, 251)
         self.conv1 = nn.Conv2d(2, 16, (3, 3), padding=1)  # o/p shape - (16, 16, 251)
         self.IN1 = nn.InstanceNorm2d(16)
@@ -36,5 +36,5 @@ class ClassicalRadarClassifier(nn.Module):
         return x
 
 
-def create(conf_path: str):
-    create_base(conf_path, lambda c: ClassicalRadarClassifier(c))
+def create(yaml_path: str):
+    create_base(yaml_path, lambda n: ClassicalRadarClassifier(n))

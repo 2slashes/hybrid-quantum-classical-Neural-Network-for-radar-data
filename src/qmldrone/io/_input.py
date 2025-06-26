@@ -21,3 +21,9 @@ def load_yaml(yaml_path):
         classes = data["classes"]
         conf["num_outputs"] = len(classes)
         return conf, paths, classes
+
+def get_num_qlayers_from_yaml(yaml_path):
+    with open(yaml_path, "r") as file:
+        data = yaml.safe_load(file)
+        return data["num_qlayers"]
+        

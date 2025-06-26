@@ -17,9 +17,9 @@ def plot_base(
     predicted,
     pos_label=0,
 ):
-    conf_plot_file = None
+    confm_plot_file = None
     if plot_dir is not None:
-        conf_plot_file = (
+        confm_plot_file = (
             f"{plot_dir}/hybrid_classifier_conf_model-{model_snr}_signal-{snr}.pdf"
         )
 
@@ -31,24 +31,16 @@ def plot_base(
     print(f"{confm=}")
     if conf["plot_confusion"] is True:
         plt.close()
-        if conf["model_type"] == "classification":
-            fig, ax = plot_confusion_matrix(
-                conf_mat=confm,
-                show_normed=True,
-                colorbar=True,
-                class_names=classes,
-            )
-        else:
-            fig, ax = plot_confusion_matrix(
-                conf_mat=confm,
-                show_normed=True,
-                colorbar=True,
-                class_names=classes,
-            )
+        fig, ax = plot_confusion_matrix(
+            conf_mat=confm,
+            show_normed=True,
+            colorbar=True,
+            class_names=classes,
+        )
         ax.set_title(f"Confusion matrix for SNR {snr}dB")
         plt.tight_layout()
-        if conf_plot_file is not None:
-            plt.savefig(conf_plot_file)
+        if confm_plot_file is not None:
+            plt.savefig(confm_plot_file)
         else:
             plt.show()
 

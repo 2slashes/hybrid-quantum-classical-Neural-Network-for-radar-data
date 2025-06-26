@@ -19,7 +19,7 @@ modelConfig:
   model_name: "detection-model"
   plot_confusion: true
   model_type: "detection"
-  num_qlayers: 4
 classes:
 - "Signal"
 - "Noise"
+num_qlayers: 4

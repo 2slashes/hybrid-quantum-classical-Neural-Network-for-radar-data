@@ -9,6 +9,7 @@ import torch.nn as nn
 def train(
     model_builder,
     conf,
+    num_outputs,
     device,
     model_dir: str,
     train_data_dir: str,
@@ -24,7 +25,7 @@ def train(
         )
 
         print(f"SNR: {snr} dB")
-        net = model_builder(conf)
+        net = model_builder(num_outputs)
 
         net = net.to(device)
         optim = torch.optim.AdamW(net.parameters(), lr=conf["learning_rate"])
@@ -57,6 +58,7 @@ def train(
 def test(
     model_builder,
     conf,
+    num_outputs,
     classes,
     device,
     model_dir: str,
@@ -64,6 +66,13 @@ def test(
     test_data_dir: str,
 ):
     os.system(f"mkdir -p {plot_dir}")
+    metrics_conf = dict(
+        (key, conf[key])
+        for key in (
+            "model_type",
+            "plot_confusion",
+        )
+    )
     for snr in conf["snr"]:
         print(test_data_dir)
         cur_model_path = f"{model_dir}/{conf['model_name']}-{snr}.pt"
@@ -76,9 +85,9 @@ def test(
 
         print(f"SNR: {snr} dB")
 
-        net = model_builder(conf)
+        net = model_builder(num_outputs)
         test_metrics(
-            conf,
+            metrics_conf,
             net,
             snr,
             cur_model_path,

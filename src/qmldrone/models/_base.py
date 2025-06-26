@@ -4,11 +4,45 @@ from ..jobs._base import train, test
 
 def create_base(conf_path: str, classifier):
     conf, paths, classes = load_yaml(conf_path)
+    num_outputs = len(classes)
     device = get_device()
-    train(classifier, conf, device, paths["model_dir"], paths["train_data_dir"])
+    train_conf = dict(
+        (key, conf[key])
+        for key in (
+            "snr",
+            "model_name",
+            "f_s",
+            "batch_size",
+            "learning_rate",
+            "epochs",
+            "min_epochs",
+            "loss_threshold",
+            "save_model",
+        )
+    )
+    test_conf = dict(
+        (key, conf[key])
+        for key in (
+            "snr",
+            "model_name",
+            "f_s",
+            "batch_size",
+            "model_type",
+            "plot_confusion",
+        )
+    )
+    train(
+        classifier,
+        train_conf,
+        num_outputs,
+        device,
+        paths["model_dir"],
+        paths["train_data_dir"],
+    )
     test(
         classifier,
-        conf,
+        test_conf,
+        num_outputs,
         classes,
         device,
         paths["model_dir"],

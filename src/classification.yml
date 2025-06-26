@@ -19,10 +19,10 @@ modelConfig:
   model_name: "classification-model"
   plot_confusion: true
   model_type: "classification"
-  num_qlayers: 4
 classes:
 - "DJI_Matrice_300_RTK"
 - "DJI_Mavic_Air_2"
 - "DJI_Mavic_Mini"
 - "DJI_Phantom_4"
 - "Parrot_Disco"
+num_qlayers: 4
