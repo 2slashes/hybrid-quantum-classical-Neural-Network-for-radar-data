@@ -1,15 +1,15 @@
-from ..metrics._base import test as common_test
+from ..metrics._base import test_metrics
 from ..io._input import dataloader
 import torchvision.datasets as ds
 import torch
 import os
-from ..io._input import get_device
 import torch.nn as nn
 
 
 def train(
     model_builder,
     conf,
+    device,
     model_dir: str,
     train_data_dir: str,
 ):
@@ -26,7 +26,6 @@ def train(
         print(f"SNR: {snr} dB")
         net = model_builder(conf)
 
-        device = get_device()
         net = net.to(device)
         optim = torch.optim.AdamW(net.parameters(), lr=conf["learning_rate"])
         loss_fn = nn.CrossEntropyLoss().to(device)
@@ -59,6 +58,7 @@ def test(
     model_builder,
     conf,
     classes,
+    device,
     model_dir: str,
     plot_dir: str,
     test_data_dir: str,
@@ -77,6 +77,13 @@ def test(
         print(f"SNR: {snr} dB")
 
         net = model_builder(conf)
-        common_test(
-            conf, net, snr, cur_model_path, testLoader, classes, plot_dir=plot_dir
+        test_metrics(
+            conf,
+            net,
+            snr,
+            cur_model_path,
+            testLoader,
+            classes,
+            device,
+            plot_dir=plot_dir,
         )

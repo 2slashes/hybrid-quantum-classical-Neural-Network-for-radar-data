@@ -2,9 +2,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import pennylane as qml
-from qmldrone.io._input import load_yaml
 from .classic import ClassicalRadarClassifier
-from ..jobs._base import train, test
+from ._base import create_base
 
 
 class HybridRadarClassifier(ClassicalRadarClassifier):
@@ -52,20 +51,6 @@ class HybridRadarClassifier(ClassicalRadarClassifier):
 
 
 def create(conf_path: str, qlayer):
-    conf, paths, classes = load_yaml(conf_path)
     circuit = qlayer.circuit
     weight_shapes = qlayer.weight_shapes
-    train(
-        lambda c: HybridRadarClassifier(c, circuit, weight_shapes),
-        conf,
-        paths["model_dir"],
-        paths["train_data_dir"],
-    )
-    test(
-        lambda c: HybridRadarClassifier(c, circuit, weight_shapes),
-        conf,
-        classes,
-        paths["model_dir"],
-        paths["plot_dir"],
-        paths["test_data_dir"],
-    )
+    create_base(conf_path, lambda c: HybridRadarClassifier(c, circuit, weight_shapes))

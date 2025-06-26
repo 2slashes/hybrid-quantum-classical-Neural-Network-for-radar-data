@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-from ..jobs._base import train, test
-from ..io._input import load_yaml
+from ._base import create_base
 
 
 class ClassicalRadarClassifier(nn.Module):
@@ -38,18 +37,4 @@ class ClassicalRadarClassifier(nn.Module):
 
 
 def create(conf_path: str):
-    conf, paths, classes = load_yaml(conf_path)
-    train(
-        lambda c: ClassicalRadarClassifier(c),
-        conf,
-        paths["model_dir"],
-        paths["train_data_dir"],
-    )
-    test(
-        lambda c: ClassicalRadarClassifier(c),
-        conf,
-        classes,
-        paths["model_dir"],
-        paths["plot_dir"],
-        paths["test_data_dir"],
-    )
+    create_base(conf_path, lambda c: ClassicalRadarClassifier)

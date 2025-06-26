@@ -1,22 +1,20 @@
 import torch
 import torch.nn as nn
-import numpy as np
-from ..io._input import get_device
 from ..visualization.base import plot_base
 
 
-def test(
+def test_metrics(
     conf,
     net,
     snr,
     cur_model_path,
     testLoader,
     classes,
+    device,
     plot_dir=None,
     pos_label=0,
     model_snr=5,
 ):
-    device = get_device()
     net = net.to(device)
     net.load_state_dict(torch.load(cur_model_path))
     net.eval()
