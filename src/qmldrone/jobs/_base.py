@@ -1,8 +1,10 @@
-from ..metrics._base import train as common_train, test as common_test
+from ..metrics._base import test as common_test
 from ..io._input import dataloader
 import torchvision.datasets as ds
 import torch
 import os
+from ..io._input import get_device
+import torch.nn as nn
 
 
 def train(
@@ -23,7 +25,34 @@ def train(
 
         print(f"SNR: {snr} dB")
         net = model_builder(conf)
-        common_train(conf, net, cur_model_path, trainLoader)
+
+        device = get_device()
+        net = net.to(device)
+        optim = torch.optim.AdamW(net.parameters(), lr=conf["learning_rate"])
+        loss_fn = nn.CrossEntropyLoss().to(device)
+        for x in range(conf["epochs"]):
+            net.train()
+
+            for i, data in enumerate(trainLoader):
+                # plot_spectrogram(torch.squeeze(data[0]))
+                inputs, labels = data
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                optim.zero_grad()
+
+                outputs = net(inputs.float())
+                loss = loss_fn(outputs, labels)
+                loss.backward()
+                optim.step()
+                loss_val = loss.item()
+
+            print("Train Epoch: {} Loss: {:.6f}".format(x, loss_val))
+            if x > conf["min_epochs"] and loss_val < conf["loss_threshold"]:
+                break
+
+        if conf["save_model"] is True:
+            print(f"Saving model state to {cur_model_path}")
+            torch.save(net.state_dict(), cur_model_path)
 
 
 def test(
