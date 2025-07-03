@@ -1,7 +1,7 @@
 ---
 name: Refactor
 about: Create a report regarding refactoring
-title: "[REFACT]"
+title: "[REFACT] "
 labels: refact
 assignees: 2slashes
 
