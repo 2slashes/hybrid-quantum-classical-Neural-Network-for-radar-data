@@ -13,10 +13,11 @@ def train(
     device,
     model_dir: str,
     train_data_dir: str,
+    disable_min_epochs=True,
 ):
     os.system(f"mkdir -p {model_dir}")
     for snr in conf["snr"]:
-        cur_model_path = f"{model_dir}/{conf['model_name']}-{snr}.pt"
+        
         trainset_root = f"{train_data_dir}/{conf['f_s']}fs/{snr}SNR"
         print(trainset_root)
         trainds = ds.DatasetFolder(trainset_root, dataloader, extensions=("npy",))
@@ -47,10 +48,11 @@ def train(
                 loss_val = loss.item()
 
             print("Train Epoch: {} Loss: {:.6f}".format(x, loss_val))
-            if x > conf["min_epochs"] and loss_val < conf["loss_threshold"]:
+            if not disable_min_epochs and x > conf["min_epochs"] and loss_val < conf["loss_threshold"]:
                 break
 
         if conf["save_model"] is True:
+            cur_model_path = f"{model_dir}/{conf['model_name']}-{snr}.pt"
             print(f"Saving model state to {cur_model_path}")
             torch.save(net.state_dict(), cur_model_path)
 
