@@ -7,7 +7,6 @@ def test_metrics(
     conf,
     net,
     snr,
-    cur_model_path,
     testLoader,
     classes,
     device,
@@ -15,8 +14,6 @@ def test_metrics(
     pos_label=0,
     model_snr=5,
 ):
-    net = net.to(device)
-    net.load_state_dict(torch.load(cur_model_path))
     net.eval()
 
     testloss = 0
