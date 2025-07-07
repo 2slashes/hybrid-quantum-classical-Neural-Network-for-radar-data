@@ -1,4 +1,4 @@
-from qmldrone import scripts
+from qmldrone import _scripts
 
 if __name__ == "__main__":
-    scripts.main()
+    _scripts.main()
