@@ -4,17 +4,17 @@ from ..visualization.base import plot_base
 
 
 def test_metrics(
-    conf,
-    net,
-    snr,
+    classifier,
+    conf: dict[str, any],
+    snr: int,
     testLoader,
-    classes,
+    classes: list[str],
     device,
-    plot_dir=None,
-    pos_label=0,
-    model_snr=5,
-):
-    net.eval()
+    plot_dir: str = None,
+    pos_label: int = 0,
+    model_snr: int = 5,
+) -> None:
+    classifier.eval()
 
     testloss = 0
     predicted = None
@@ -32,7 +32,7 @@ def test_metrics(
         else:
             target = torch.cat((target, labels))
 
-        outputs = net(inputs.float())
+        outputs = classifier(inputs.float())
         loss = loss_fn(outputs, labels)
         testloss += loss.item()
 

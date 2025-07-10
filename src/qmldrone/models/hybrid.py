@@ -2,13 +2,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import pennylane as qml
-from .classic import ClassicalRadarClassifier
+from .classic import RadarClassifier
 from ._base import create_base
 from ..io._input import get_num_qlayers_from_yaml
-from .quantum import OriginalCircuit
+from .quantum import OriginalCircuit, QuantumLayer
 
 
-class HybridRadarClassifier(ClassicalRadarClassifier):
+class HybridRadarClassifier(RadarClassifier):
     def __init__(self, num_outputs, circuit, weight_shapes, n_qlayers):
         super(HybridRadarClassifier, self).__init__(num_outputs)
 
@@ -40,7 +40,7 @@ class HybridRadarClassifier(ClassicalRadarClassifier):
         return x
 
 
-def create(yaml_path: str, qlayer=OriginalCircuit()):
+def create(yaml_path: str, qlayer: QuantumLayer = OriginalCircuit()) -> None:
     circuit = qlayer.circuit
     weight_shapes = qlayer.weight_shapes
     num_qlayers = get_num_qlayers_from_yaml(yaml_path)

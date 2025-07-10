@@ -6,14 +6,13 @@ import torch.nn as nn
 
 
 def train(
-    net,
-    conf,
+    classifier,
+    conf: dict[str, any],
     device,
-    snr,
-    model_dir: str,
+    snr: int,
     train_data_dir: str,
-    disable_min_epochs=True,
-):
+    disable_min_epochs: bool = True,
+) -> None:
     trainset_root = f"{train_data_dir}/{conf['f_s']}fs/{snr}SNR"
     trainds = ds.DatasetFolder(trainset_root, dataloader, extensions=("npy",))
     trainLoader = torch.utils.data.DataLoader(
@@ -21,10 +20,10 @@ def train(
     )
 
     print(f"SNR: {snr} dB")
-    optim = torch.optim.AdamW(net.parameters(), lr=conf["learning_rate"])
+    optim = torch.optim.AdamW(classifier.parameters(), lr=conf["learning_rate"])
     loss_fn = nn.CrossEntropyLoss().to(device)
     for x in range(conf["epochs"]):
-        net.train()
+        classifier.train()
 
         for i, data in enumerate(trainLoader):
             inputs, labels = data
@@ -32,7 +31,7 @@ def train(
             labels = labels.to(device)
             optim.zero_grad()
 
-            outputs = net(inputs.float())
+            outputs = classifier(inputs.float())
             loss = loss_fn(outputs, labels)
             loss.backward()
             optim.step()
@@ -48,13 +47,12 @@ def train(
 
 
 def test(
-    net,
-    conf,
-    metrics_conf,
-    classes,
+    classifier,
+    conf: dict[str, any],
+    metrics_conf: dict[str, any],
+    classes: list[str],
     device,
-    snr,
-    model_dir: str,
+    snr: int,
     plot_dir: str,
     test_data_dir: str,
 ):
@@ -67,8 +65,8 @@ def test(
     print(f"SNR: {snr} dB")
 
     test_metrics(
+        classifier,
         metrics_conf,
-        net,
         snr,
         testLoader,
         classes,

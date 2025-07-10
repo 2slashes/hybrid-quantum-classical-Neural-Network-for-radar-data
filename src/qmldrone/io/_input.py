@@ -16,7 +16,7 @@ def get_device():
     return device
 
 
-def load_yaml(yaml_path):
+def load_yaml(yaml_path: str) -> tuple[dict, dict, list]:
     with open(yaml_path, "r") as file:
         data = yaml.safe_load(file)
 
@@ -27,9 +27,9 @@ def load_yaml(yaml_path):
         if "classes" not in data:
             raise Exception('"classes" not specified in config file')
 
-        conf = data["modelConfig"]
-        paths = data["paths"]
-        classes = data["classes"]
+        conf: dict[str, any] = data["modelConfig"]
+        paths: dict[str, str] = data["paths"]
+        classes: list[str] = data["classes"]
 
         if len(classes):
             conf["num_outputs"] = len(classes)
@@ -124,9 +124,10 @@ def validate_paths(paths):
         raise Exception('"plot_dir" not in paths.')
 
 
-def get_num_qlayers_from_yaml(yaml_path):
+def get_num_qlayers_from_yaml(yaml_path: str) -> int:
     with open(yaml_path, "r") as file:
-        data = yaml.safe_load(file)
+        data: dict[str, any] = yaml.safe_load(file)
         if "num_qlayers" not in data:
             raise Exception("num_qlayers must be specified to use hybrid models")
-        return data["num_qlayers"]
+        num_qlayers: int = data["num_qlayers"]
+        return num_qlayers

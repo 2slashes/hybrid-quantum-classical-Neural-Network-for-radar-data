@@ -3,9 +3,9 @@ import torch.nn as nn
 from ._base import create_base
 
 
-class ClassicalRadarClassifier(nn.Module):
+class RadarClassifier(nn.Module):
     def __init__(self, num_outputs):
-        super(ClassicalRadarClassifier, self).__init__()
+        super(RadarClassifier, self).__init__()
         self.outputs = num_outputs
         self.conv1 = nn.Conv2d(2, 16, (3, 3), padding=1)
         self.IN1 = nn.InstanceNorm2d(16)
@@ -34,5 +34,5 @@ class ClassicalRadarClassifier(nn.Module):
         return x
 
 
-def create(yaml_path: str):
-    create_base(yaml_path, lambda n: ClassicalRadarClassifier(n))
+def create(yaml_path: str) -> None:
+    create_base(yaml_path, lambda n: RadarClassifier(n))

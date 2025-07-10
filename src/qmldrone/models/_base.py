@@ -4,7 +4,7 @@ import os
 import torch
 
 
-def create_base(conf_path: str, classifier):
+def create_base(conf_path: str, classifier) -> None:
     conf, paths, classes = load_yaml(conf_path)
     num_outputs = len(classes)
     device = get_device()
@@ -29,7 +29,6 @@ def create_base(conf_path: str, classifier):
             train_conf,
             device,
             snr,
-            paths["model_dir"],
             paths["train_data_dir"],
             conf["disable_min_epochs"],
         )
@@ -40,7 +39,6 @@ def create_base(conf_path: str, classifier):
             classes,
             device,
             snr,
-            paths["model_dir"],
             paths["plot_dir"],
             paths["test_data_dir"],
         )
@@ -50,9 +48,9 @@ def create_base(conf_path: str, classifier):
             torch.save(nets[snr].state_dict(), cur_model_path)
 
 
-def setup_train_and_test_conf(conf):
-    train_conf = {}
-    test_conf = {}
+def setup_train_and_test_conf(conf: dict[str, any]) -> tuple[dict, dict]:
+    train_conf: dict[str, any] = {}
+    test_conf: dict[str, any] = {}
     if conf["save_model"]:
         train_conf = dict(
             (key, conf[key])
