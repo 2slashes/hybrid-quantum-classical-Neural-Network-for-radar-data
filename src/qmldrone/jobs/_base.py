@@ -27,7 +27,6 @@ def train(
         net.train()
 
         for i, data in enumerate(trainLoader):
-            # plot_spectrogram(torch.squeeze(data[0]))
             inputs, labels = data
             inputs = inputs.to(device)
             labels = labels.to(device)

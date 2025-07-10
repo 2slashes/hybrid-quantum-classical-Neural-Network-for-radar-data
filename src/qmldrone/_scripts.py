@@ -9,8 +9,8 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument(
     "type", choices=["hybrid", "classic"], help="Select a classic or hybrid model."
-)  # hybrid or classic
-parser.add_argument("load", help="File path for YAML config.")  # yaml path
+)
+parser.add_argument("load", help="File path for YAML config.")
 
 
 def main(argv: list[str] | None = None) -> int:

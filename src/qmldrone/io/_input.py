@@ -81,7 +81,6 @@ def validate_conf(conf):
     conf["model_type"] = conf["model_type"].lower()
     if conf["model_type"] != "detection" and conf["model_type"] != "classification":
         raise Exception('"model_type" must be detection or classification.')
-    
 
     if "min_epochs" not in conf:
         conf["disable_min_epochs"] = True
@@ -103,9 +102,6 @@ def validate_conf(conf):
         raise Exception(
             '"save_model" set to true, but "model_name" not specified in modelConfig. Please specify a model name.'
         )
-    elif not conf["save_model"]:
-        # to be removed once the model doesn't have to be saved between train and test
-        conf["model_name"] = "no_save"
 
     if "plot_confusion" not in conf:
         conf["plot_confusion"] = False
