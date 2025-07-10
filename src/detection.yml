@@ -6,7 +6,7 @@ paths:
   plot_dir: "../original/Radar/binary/two_sided_plots"
 modelConfig:
   f_s: 10000
-  snr:
+  snrList:
   - 20
   - 15
   - 10

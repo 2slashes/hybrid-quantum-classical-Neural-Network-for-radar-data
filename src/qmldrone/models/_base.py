@@ -5,57 +5,59 @@ import torch
 
 
 def create_base(conf_path: str, classifier) -> None:
-    conf, paths, classes = load_yaml(conf_path)
-    num_outputs = len(classes)
+    model_config, paths, drone_classes = load_yaml(conf_path)
+    num_outputs = len(drone_classes)
     device = get_device()
-    train_conf, test_conf = setup_train_and_test_conf(conf)
+    train_config, test_config = setup_train_and_test_config(model_config)
 
     os.system(f"mkdir -p {paths['model_dir']}")
     os.system(f"mkdir -p {paths['plot_dir']}")
 
-    metrics_conf = dict(
-        (key, conf[key])
+    metrics_config = dict(
+        (key, model_config[key])
         for key in (
             "model_type",
             "plot_confusion",
         )
     )
 
-    nets = {}
-    for snr in conf["snr"]:
-        nets[snr] = classifier(num_outputs).to(device)
+    metrics_config = setup_metrics_config(test_config)
+
+    models = {}
+    for snr in model_config["snrList"]:
+        models[snr] = classifier(num_outputs).to(device)
         train(
-            nets[snr],
-            train_conf,
+            models[snr],
+            train_config,
             device,
             snr,
             paths["train_data_dir"],
-            conf["disable_min_epochs"],
+            model_config["disable_min_epochs"],
         )
         test(
-            nets[snr],
-            test_conf,
-            metrics_conf,
-            classes,
+            models[snr],
+            test_config,
+            metrics_config,
+            drone_classes,
             device,
             snr,
             paths["plot_dir"],
             paths["test_data_dir"],
         )
-        if conf["save_model"] is True:
-            cur_model_path = f"{paths['model_dir']}/{conf['model_name']}-{snr}.pt"
+        if model_config["save_model"] is True:
+            cur_model_path = f"{paths['model_dir']}/{model_config['model_name']}-{snr}.pt"
             print(f"Saving model state to {cur_model_path}")
-            torch.save(nets[snr].state_dict(), cur_model_path)
+            torch.save(models[snr].state_dict(), cur_model_path)
 
 
-def setup_train_and_test_conf(conf: dict[str, any]) -> tuple[dict, dict]:
-    train_conf: dict[str, any] = {}
-    test_conf: dict[str, any] = {}
-    if conf["save_model"]:
-        train_conf = dict(
-            (key, conf[key])
+def setup_train_and_test_config(model_config: dict[str, any]) -> tuple[dict, dict]:
+    train_config: dict[str, any] = {}
+    test_config: dict[str, any] = {}
+    if model_config["save_model"]:
+        train_config = dict(
+            (key, model_config[key])
             for key in (
-                "snr",
+                "snrList",
                 "model_name",
                 "f_s",
                 "batch_size",
@@ -67,10 +69,10 @@ def setup_train_and_test_conf(conf: dict[str, any]) -> tuple[dict, dict]:
             )
         )
 
-        test_conf = dict(
-            (key, conf[key])
+        test_config = dict(
+            (key, model_config[key])
             for key in (
-                "snr",
+                "snrList",
                 "model_name",
                 "f_s",
                 "batch_size",
@@ -79,10 +81,10 @@ def setup_train_and_test_conf(conf: dict[str, any]) -> tuple[dict, dict]:
             )
         )
     else:
-        train_conf = dict(
-            (key, conf[key])
+        train_config = dict(
+            (key, model_config[key])
             for key in (
-                "snr",
+                "snrList",
                 "f_s",
                 "batch_size",
                 "learning_rate",
@@ -93,14 +95,24 @@ def setup_train_and_test_conf(conf: dict[str, any]) -> tuple[dict, dict]:
             )
         )
 
-        test_conf = dict(
-            (key, conf[key])
+        test_config = dict(
+            (key, model_config[key])
             for key in (
-                "snr",
+                "snrList",
                 "f_s",
                 "batch_size",
                 "model_type",
                 "plot_confusion",
             )
         )
-    return train_conf, test_conf
+    return train_config, test_config
+
+def setup_metrics_config(test_config: dict[str, any]) -> dict:
+    metrics_config = dict(
+        (key, test_config[key])
+        for key in (
+            "model_type",
+            "plot_confusion",
+        )
+    )
+    return metrics_config

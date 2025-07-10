@@ -5,10 +5,10 @@ from ..visualization.base import plot_base
 
 def test_metrics(
     classifier,
-    conf: dict[str, any],
+    model_config: dict[str, any],
     snr: int,
     testLoader,
-    classes: list[str],
+    drone_classes: list[str],
     device,
     plot_dir: str = None,
     pos_label: int = 0,
@@ -56,8 +56,8 @@ def test_metrics(
         plot_dir,
         model_snr,
         snr,
-        conf,
-        classes,
+        model_config,
+        drone_classes,
         target,
         probabilities,
         predicted,

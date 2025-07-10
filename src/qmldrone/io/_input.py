@@ -18,94 +18,94 @@ def get_device():
 
 def load_yaml(yaml_path: str) -> tuple[dict, dict, list]:
     with open(yaml_path, "r") as file:
-        data = yaml.safe_load(file)
+        user_config_data = yaml.safe_load(file)
 
-        if "modelConfig" not in data:
+        if "modelConfig" not in user_config_data:
             raise Exception('"modelConfig" not present in config file.')
-        if "paths" not in data:
+        if "paths" not in user_config_data:
             raise Exception('"paths" not specified in config file.')
-        if "classes" not in data:
+        if "classes" not in user_config_data:
             raise Exception('"classes" not specified in config file')
 
-        conf: dict[str, any] = data["modelConfig"]
-        paths: dict[str, str] = data["paths"]
-        classes: list[str] = data["classes"]
+        model_config: dict[str, any] = user_config_data["modelConfig"]
+        paths: dict[str, str] = user_config_data["paths"]
+        drone_classes: list[str] = user_config_data["classes"]
 
-        if len(classes):
-            conf["num_outputs"] = len(classes)
+        if len(drone_classes):
+            model_config["num_outputs"] = len(drone_classes)
         else:
             raise Exception(
                 '"classes" is empty. Please specify the classes for the model.'
             )
 
-        validate_conf(conf)
+        validate_model_config(model_config)
         validate_paths(paths)
 
-        return conf, paths, classes
+        return model_config, paths, drone_classes
 
 
-def validate_conf(conf):
-    if "f_s" not in conf:
+def validate_model_config(model_config):
+    if "f_s" not in model_config:
         raise Exception('"f_s" not specified in modelConfig.')
-    elif not isinstance(conf["f_s"], int):
+    elif not isinstance(model_config["f_s"], int):
         raise TypeError('"f_s" is not an integer.')
 
-    if "snr" not in conf:
-        raise Exception('"snr" not specified in modelConfig')
-    elif not isinstance(conf["snr"], list):
+    if "snrList" not in model_config:
+        raise Exception('"snrList" not specified in modelConfig')
+    elif not isinstance(model_config["snrList"], list):
         raise TypeError('"f_s" is not an list.')
-    elif not all(isinstance(entry, int) for entry in conf["snr"]):
-        raise TypeError('"all elements in snr must be integers')
+    elif not all(isinstance(entry, int) for entry in model_config["snrList"]):
+        raise TypeError('all elements in "snrList" must be integers')
 
-    if "batch_size" not in conf:
+    if "batch_size" not in model_config:
         raise Exception('"batch_size" not specified in modelConfig')
-    elif not isinstance(conf["batch_size"], int):
+    elif not isinstance(model_config["batch_size"], int):
         raise TypeError('"batch_size" is not an integer.')
 
-    if "epochs" not in conf:
+    if "epochs" not in model_config:
         raise Exception('"epochs" not specified in modelConfig')
-    elif not isinstance(conf["epochs"], int):
+    elif not isinstance(model_config["epochs"], int):
         raise TypeError('"epochs" is not an integer.')
 
-    if "learning_rate" not in conf:
+    if "learning_rate" not in model_config:
         raise Exception('"learning_rate" not specified in modelConfig')
-    elif not isinstance(conf["learning_rate"], float):
+    elif not isinstance(model_config["learning_rate"], float):
         raise TypeError('"learning_rate" is not a float.')
 
-    if "model_type" not in conf:
+    if "model_type" not in model_config:
         raise Exception(
             '"model_type" not specified in modelConfig. Please specify detection or classification.'
         )
-    elif not isinstance(conf["model_type"], str):
+    elif not isinstance(model_config["model_type"], str):
         raise TypeError('"model_type" must be a string.')
-    conf["model_type"] = conf["model_type"].lower()
-    if conf["model_type"] != "detection" and conf["model_type"] != "classification":
+    model_config["model_type"] = model_config["model_type"].lower()
+    if model_config["model_type"] != "detection" and model_config["model_type"] != "classification":
         raise Exception('"model_type" must be detection or classification.')
 
-    if "min_epochs" not in conf:
-        conf["disable_min_epochs"] = True
-    elif not isinstance(conf["min_epochs"], int):
+    if "min_epochs" not in model_config:
+        model_config["disable_min_epochs"] = True
+    elif not isinstance(model_config["min_epochs"], int):
         raise TypeError('"min_epochs" is not an integer.')
-    elif "loss_threshold" not in conf:
+    elif "loss_threshold" not in model_config:
         raise Exception(
             '"min_epochs" specified, but "loss_threshold" is missing from modelConfig.'
         )
     else:
-        conf["disable_min_epochs"] = False
+        model_config["disable_min_epochs"] = False
 
-    if "save_model" not in conf:
+    if "save_model" not in model_config:
         warn('"save_model" not specified in modelConfig. Using False by default.')
-        conf["save_model"] = False
-    elif not isinstance(conf["save_model"], bool):
+        model_config["save_model"] = False
+    elif not isinstance(model_config["save_model"], bool):
         raise TypeError('"save_model" is not a boolean.')
-    elif conf["save_model"] and "model_name" not in conf:
+    elif model_config["save_model"] and "model_name" not in model_config:
         raise Exception(
             '"save_model" set to true, but "model_name" not specified in modelConfig. Please specify a model name.'
         )
 
-    if "plot_confusion" not in conf:
-        conf["plot_confusion"] = False
-    elif not isinstance(conf["plot_confusion"], bool):
+    if "plot_confusion" not in model_config:
+        model_config["plot_confusion"] = False
+    elif not isinstance(model_config["plot_confusion"], bool):
         raise TypeError('"plot_confusion" is not a boolean.')
 
 
@@ -126,8 +126,8 @@ def validate_paths(paths):
 
 def get_num_qlayers_from_yaml(yaml_path: str) -> int:
     with open(yaml_path, "r") as file:
-        data: dict[str, any] = yaml.safe_load(file)
-        if "num_qlayers" not in data:
+        user_config_data: dict[str, any] = yaml.safe_load(file)
+        if "num_qlayers" not in user_config_data:
             raise Exception("num_qlayers must be specified to use hybrid models")
-        num_qlayers: int = data["num_qlayers"]
+        num_qlayers: int = user_config_data["num_qlayers"]
         return num_qlayers
