@@ -1,0 +1,25 @@
+---
+paths:
+  train_data_dir: "../original/Radar/binary/two_sided/trainset"
+  test_data_dir: "../original/Radar/binary/two_sided/testset"
+  model_dir: "../original/Radar/binary/two_sided_models"
+  plot_dir: "../original/Radar/binary/two_sided_plots"
+modelConfig:
+  f_s: 10000
+  snrList:
+  - 20
+  - 15
+  - 10
+  batch_size: 8
+  epochs: 1
+  min_epochs: 1
+  loss_threshold: 0.01
+  learning_rate: 0.001
+  save_model: true
+  model_name: "detection-model"
+  plot_confusion: true
+  model_type: "detection"
+classes:
+- "Signal"
+- "Noise"
+num_qlayers: 4
