@@ -1,3 +1,4 @@
+from typing import override
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -9,6 +10,17 @@ from .quantum import OriginalCircuit, QuantumLayer
 
 
 class HybridRadarClassifier(RadarClassifier):
+    """A hybrid quantum-classical classifier for radar data.
+
+    This model combines classical CNN layers with quantum layers to process radar data
+    and classify it into multiple output classes.
+    
+    Args:
+        num_outputs (int): The number of output classes for classification.
+        circuit: The quantum circuit to be used in the quantum layers.
+        weight_shapes: The shapes of the weights for the quantum layers.
+        n_qlayers (int): The number of quantum layers to be used in the model.
+    """
     def __init__(self, num_outputs, circuit, weight_shapes, n_qlayers):
         super(HybridRadarClassifier, self).__init__(num_outputs)
 
@@ -16,6 +28,7 @@ class HybridRadarClassifier(RadarClassifier):
         for _ in range(n_qlayers):
             self.qlayers.append(qml.qnn.TorchLayer(circuit, weight_shapes))
 
+    @override
     def forward(self, x):
         x = self.pool1(self.relu(self.IN1(self.conv1(x))))
         x = self.drop(x)

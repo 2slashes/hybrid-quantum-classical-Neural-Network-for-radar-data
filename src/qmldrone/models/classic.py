@@ -4,6 +4,13 @@ from ._base import create_base
 
 
 class RadarClassifier(nn.Module):
+    """A CNN-based classifier for radar data.
+
+    This model is designed to process radar data with two channels and classify it into multiple output classes.
+    
+    Args:
+        num_outputs (int): The number of output classes for classification.
+    """
     def __init__(self, num_outputs):
         super(RadarClassifier, self).__init__()
         self.outputs = num_outputs

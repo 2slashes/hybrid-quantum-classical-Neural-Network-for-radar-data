@@ -4,7 +4,18 @@ import os
 import torch
 
 
-def create_base(conf_path: str, classifier) -> None:
+def create_base(conf_path: str, classifier: callable) -> None:
+    """Creates a drone classifier model to train and test.
+
+    This function reads the configuration from a YAML file, sets up the model,
+    and trains and tests the model for each specified SNR (Signal-to-Noise Ratio).
+
+    Args:
+        conf_path: file path to the YAML configuration file.
+        classifier: a callable that returns a classifier model instance.
+    
+    Returns: None
+    """
     model_config, paths, drone_classes = load_yaml(conf_path)
     num_outputs = len(drone_classes)
     device = get_device()
@@ -12,16 +23,6 @@ def create_base(conf_path: str, classifier) -> None:
 
     os.system(f"mkdir -p {paths['model_dir']}")
     os.system(f"mkdir -p {paths['plot_dir']}")
-
-    metrics_config = dict(
-        (key, model_config[key])
-        for key in (
-            "model_type",
-            "plot_confusion",
-        )
-    )
-
-    metrics_config = setup_metrics_config(test_config)
 
     models = {}
     for snr in model_config["snrList"]:
@@ -37,7 +38,6 @@ def create_base(conf_path: str, classifier) -> None:
         test(
             models[snr],
             test_config,
-            metrics_config,
             drone_classes,
             device,
             snr,
@@ -45,7 +45,9 @@ def create_base(conf_path: str, classifier) -> None:
             paths["test_data_dir"],
         )
         if model_config["save_model"] is True:
-            cur_model_path = f"{paths['model_dir']}/{model_config['model_name']}-{snr}.pt"
+            cur_model_path = (
+                f"{paths['model_dir']}/{model_config['model_name']}-{snr}.pt"
+            )
             print(f"Saving model state to {cur_model_path}")
             torch.save(models[snr].state_dict(), cur_model_path)
 
@@ -106,13 +108,3 @@ def setup_train_and_test_config(model_config: dict[str, any]) -> tuple[dict, dic
             )
         )
     return train_config, test_config
-
-def setup_metrics_config(test_config: dict[str, any]) -> dict:
-    metrics_config = dict(
-        (key, test_config[key])
-        for key in (
-            "model_type",
-            "plot_confusion",
-        )
-    )
-    return metrics_config

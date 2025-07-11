@@ -14,6 +14,23 @@ def test_metrics(
     pos_label: int = 0,
     model_snr: int = 5,
 ) -> None:
+    """Part of the test loop for a drone classifier model
+
+    This function evaluates the classifier on the test dataset, computes the loss,
+    and collects the predicted labels and probabilities. It then calls the plot_base
+    function to visualize the results.
+
+    Args:
+        classifier: a RadarClassifier object to test
+        model_config: dictionary containing the user's configuration options for the model
+        snr: signal to noise ratio of the data
+        testLoader: DataLoader object for the test dataset
+        drone_classes: list of classes contained in the data
+        device: hardware to run the test loop on
+        plot_dir: file path to save the plots
+
+    Returns: None
+    """
     classifier.eval()
 
     testloss = 0
